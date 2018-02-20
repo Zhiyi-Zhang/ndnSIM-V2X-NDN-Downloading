@@ -28,25 +28,23 @@ namespace ns3 {
 
 /**
  * DESCRIPTION:
- * This scenario provides a basic Wifi AP (as infrastucture) and two mobile STA nodes
- * which do active association to an AP node when within the AP's range. Association
- * is done by fetching the Bssid of current AP. After association, mobile STA will
- * send unicast unicast interests to AP which reaches the producer ans fetches data back.
- * Data is broadcast by AP, so other STA asking for same data will also receive. A global
- * Routing is used, as Default routing doesn't forward interest from AP to producer. This
- * is expected to be fixed later.
- *
  * The scenario simulates a tree topology (using topology reader module)
  *
+ *                                   /----------\
+ *                                   | Producer |
+ *                                   \----------/
+ *                                         |
+ *                                     Internet       10Mbps 100ms
+ *                                         |
  *                                    /--------\
  *                           +------->|  root  |<--------+
- *                           |        \--------/         |    10Mbps 100ms
+ *                           |        \--------/         |    10Mbps 20ms
  *                           |                           |
  *                           v                           v
  *                      /-------\                    /-------\
  *              +------>| rtr-4 |<-------+   +------>| rtr-5 |<--------+
  *              |       \-------/        |   |       \-------/         |
- *              |                        |   |                         |   10Mbps 50ms
+ *              |                        |   |                         |   10Mbps 10ms
  *              v                        v   v                         v
  *         /-------\                   /-------\                    /-------\
  *      +->| rtr-1 |<-+             +->| rtr-2 |<-+              +->| rtr-3 |<-+
@@ -58,12 +56,12 @@ namespace ns3 {
  *   \------/      \------/      \------/      \------/      \------/      \------/
  *
  *
- *  |m2|-->     |m1|--->
+ *   |v1|-->
  *
  *
  * To run scenario and see what is happening, use the following command:
  *
- *     ./waf --run=simple-wifi-mobility
+ *     ./waf --run=step01
  *
  * With LOGGING: e.g.
  *
@@ -101,11 +99,12 @@ namespace ns3 {
                                 Names::Find<Node>("ap5"),
                                 Names::Find<Node>("ap6")};
 
-    Ptr<Node> routers[5] = {Names::Find<Node>("r1"),
-                                Names::Find<Node>("r2"),
-                                Names::Find<Node>("r3"),
-                                Names::Find<Node>("r4"),
-                                Names::Find<Node>("r5"),};
+    Ptr<Node> routers[6] = {Names::Find<Node>("r1"),
+                            Names::Find<Node>("r2"),
+                            Names::Find<Node>("r3"),
+                            Names::Find<Node>("r4"),
+                            Names::Find<Node>("r5"),
+                            Names::Find<Node>("r6"),};
 
     ////// disable fragmentation, RTS/CTS for frames below 2200 bytes and fix non-unicast data rate
     Config::SetDefault("ns3::WifiRemoteStationManager::FragmentationThreshold", StringValue("2200"));
