@@ -20,16 +20,16 @@ root	NA	  1600 700
 link
 
 # from	    to		capacity	metric	delay	  queue
-ap1	        r1  	10Mbps		1	      2ms	    100
-ap2	        r1  	10Mbps		1	      2ms	    100
-ap3	        r2  	10Mbps		1	      2ms	    100
-ap4	        r2  	10Mbps		1	      2ms	    100
-ap5	        r3  	10Mbps		1	      2ms	    100
-ap6	        r3  	10Mbps		1	      2ms	    100
-r1          r4    10Mbps    1       10ms    100
-r2          r4    10Mbps    1       10ms    100
-r2          r5    10Mbps    1       10ms    100
-r3          r5    10Mbps    1       10ms    100
-r4          r6  10Mbps    1       20ms   100
-r5          r6  10Mbps    1       20ms   100
-r6          root  10Mbps    1       100ms   100
+ap1	        r1  	100Mbps		1	      10ms	    100
+ap2	        r1  	100Mbps		1	      10ms	    100
+ap3	        r2  	100Mbps		1	      10ms	    100
+ap4	        r2  	100Mbps		1	      10ms	    100
+ap5	        r3  	100Mbps		1	      10ms	    100
+ap6	        r3  	100Mbps		1	      10ms	    100
+r1          r4    100Mbps    1       12ms    100
+r2          r4    100Mbps    1       12ms    100
+r2          r5    100Mbps    1       12ms    100
+r3          r5    100Mbps    1       12ms    100
+r4          r6  100Mbps    1       20ms   100
+r5          r6  100Mbps    1       20ms   100
+r6          root  100Mbps    1       60ms   100
