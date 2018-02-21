@@ -6,3 +6,4 @@
 docs/doxygen.warnings.log
 docs/introspected-doxygen.hpp
 docs/ndnSIM.tag
+.R*
