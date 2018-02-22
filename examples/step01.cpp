@@ -1,8 +1,7 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Authors: Project members from CS 219 NDN Group
- *   Zhiyi Zhang: UCLA
- *   Your name here
+ * Authors:  Zhiyi Zhang: UCLA
+ *           Your name: your affiliation
  *
  **/
 
