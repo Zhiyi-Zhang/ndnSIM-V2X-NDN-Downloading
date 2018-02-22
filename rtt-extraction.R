@@ -31,9 +31,10 @@ for (i in 1:length(dataData)) {
     if (index2 - index == 0) {
       df$sending[index] <- sendTime
       df$recieving[index] <- recieveTime
-      df$rtt[index] <- recieveTime - sendTime
+      df$rtt[index] <- (recieveTime*1000000000 - sendTime*1000000000) - 214296000
       break
     }
   }
 }
 
+plot(df$rtt)
