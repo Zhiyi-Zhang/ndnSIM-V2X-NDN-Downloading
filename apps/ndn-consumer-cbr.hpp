@@ -65,11 +65,20 @@ protected:
   std::string
   GetRandomize() const;
 
+  /**
+   * @brief Fetch and display a data seq from cache
+   */
+  void
+  DisplayData();
+
 protected:
   double m_frequency; // Frequency of interest packets (in hertz)
   bool m_firstTime;
   Ptr<RandomVariableStream> m_random;
   std::string m_randomType;
+
+  // the next expected data seq to be displayed
+  uint32_t exp_seq;
 };
 
 } // namespace ndn

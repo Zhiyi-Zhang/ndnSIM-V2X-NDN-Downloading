@@ -33,6 +33,9 @@
 
 #include <set>
 #include <map>
+#include <unordered_set>
+#include <deque>
+#include <random>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/tag.hpp>
@@ -80,6 +83,14 @@ public:
   SendPacket();
 
   /**
+   * @brief Get the data(seq) from cache(data_cache)
+   * @param sequenceNumber to be fetched
+   * @return if fetched successfully (the data_cache may not contain this seq)
+  */
+  bool
+  GetSeqFromCache(uint32_t seq);
+
+  /**
    * @brief An event that is fired just before an Interest packet is actually send out (send is
    *inevitable)
    *
@@ -95,6 +106,20 @@ public:
 public:
   typedef void (*LastRetransmittedInterestDataDelayCallback)(Ptr<App> app, uint32_t seqno, Time delay, int32_t hopCount);
   typedef void (*FirstInterestDataDelayCallback)(Ptr<App> app, uint32_t seqno, Time delay, uint32_t retxCount, int32_t hopCount);
+
+  struct RttInfo {
+    RttInfo(int64_t _real_rtt, int64_t _est_rtt, int _retx_count)
+    : real_rtt(_real_rtt)
+    , est_rtt(_est_rtt)
+    , retx_count(_retx_count)
+    {
+
+    }
+
+    int64_t real_rtt;
+    int64_t est_rtt;
+    int retx_count;
+  };
 
 protected:
   // from App
@@ -199,6 +224,7 @@ protected:
   };
 
   SeqTimeoutsContainer m_seqTimeouts; ///< \brief multi-index for the set of SeqTimeout structs
+  SeqTimeoutsContainer m_preFetchSeq; /// record the interest for precache
 
   SeqTimeoutsContainer m_seqLastDelay;
   SeqTimeoutsContainer m_seqFullDelay;
@@ -208,6 +234,16 @@ protected:
     m_lastRetransmittedInterestDataDelay;
   TracedCallback<Ptr<App> /* app */, uint32_t /* seqno */, Time /* delay */,
                  uint32_t /*retx count*/, int32_t /*hop count*/> m_firstInterestDataDelay;
+
+
+  // used for pre-cache project
+  std::deque<RttInfo> recent_rtt;
+  std::unordered_set<uint32_t> pre_fetch;
+
+  std::set<uint32_t> data_cache;
+
+  std::random_device rdevice_;
+  std::mt19937 rengine_;
 
   /// @endcond
 };

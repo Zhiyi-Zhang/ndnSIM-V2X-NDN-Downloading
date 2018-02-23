@@ -24,7 +24,7 @@ for (i in 1:length(dataData)) {
   item <- strsplit(as.character(dataData[i]), " ")
   index <- as.numeric(item[[1]][2])
   recieveTime <- as.numeric(item[[1]][1])
-  for (j in length(interestData):1) {
+  for (j in 1:length(interestData)) {
     item2 <- strsplit(as.character(interestData[j]), " ")
     index2 <- as.numeric(item2[[1]][2])
     sendTime <- as.numeric(item2[[1]][1])

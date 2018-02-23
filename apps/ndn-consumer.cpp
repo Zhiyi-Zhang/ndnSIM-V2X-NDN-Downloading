@@ -36,6 +36,9 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/ref.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+
+#include "precache-strategy/send-more-interest.hpp"
 
 NS_LOG_COMPONENT_DEFINE("ndn.Consumer");
 
@@ -43,6 +46,8 @@ namespace ns3 {
 namespace ndn {
 
 NS_OBJECT_ENSURE_REGISTERED(Consumer);
+
+static const int kRttVectorMaxSize = 5;
 
 TypeId
 Consumer::GetTypeId(void)
@@ -82,6 +87,7 @@ Consumer::Consumer()
   : m_rand(CreateObject<UniformRandomVariable>())
   , m_seq(0)
   , m_seqMax(0) // don't request anything
+  , rengine_(rdevice_())
 {
   NS_LOG_FUNCTION_NOARGS();
 
@@ -164,10 +170,12 @@ Consumer::SendPacket()
   NS_LOG_FUNCTION_NOARGS();
 
   uint32_t seq = std::numeric_limits<uint32_t>::max(); // invalid
+  bool is_retx = false;
 
   while (m_retxSeqs.size()) {
     seq = *m_retxSeqs.begin();
     m_retxSeqs.erase(m_retxSeqs.begin());
+    is_retx = true;
     break;
   }
 
@@ -186,20 +194,39 @@ Consumer::SendPacket()
   nameWithSequence->appendSequenceNumber(seq);
   //
 
-  // shared_ptr<Interest> interest = make_shared<Interest> ();
   shared_ptr<Interest> interest = make_shared<Interest>();
   interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
   interest->setName(*nameWithSequence);
   time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
   interest->setInterestLifetime(interestLifeTime);
 
-  // NS_LOG_INFO ("Requesting Interest: \n" << *interest);
   NS_LOG_INFO("> Interest for " << seq);
 
   WillSendOutInterest(seq);
 
   m_transmittedInterests(interest, this, m_face);
   m_appLink->onReceiveInterest(*interest);
+
+  // get the pre-fetching-seq by precache strategy, if the current interest is not for retx
+  if (!is_retx) {
+    std::vector<uint32_t> pre_fetch_seq = ns3::moreInterestsToSend(seq, recent_rtt);
+    for (auto seq: pre_fetch_seq) {
+      pre_fetch.insert(seq);
+      shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
+      nameWithSequence->appendSequenceNumber(seq);
+
+      shared_ptr<Interest> interest = make_shared<Interest>();
+      interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
+      interest->setName(*nameWithSequence);
+      time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
+      interest->setInterestLifetime(interestLifeTime);
+
+      NS_LOG_INFO("> Pre-Fetch Interest: " << seq);
+
+      m_transmittedInterests(interest, this, m_face);
+      m_appLink->onReceiveInterest(*interest);
+    }
+  }
 
   ScheduleNextPacket();
 }
@@ -214,6 +241,29 @@ Consumer::OnData(shared_ptr<const Data> data)
   if (!m_active)
     return;
 
+  // introduce packet loss
+  std::uniform_int_distribution<> packet_loss_dist(0, 100);
+  uint64_t number = packet_loss_dist(rengine_);
+  // packet loss rate = 1%
+  /*
+  if (number == 0) {
+    // std::cout << "node(" << m_id << ") drops the current interest: name = " << interest.getName() << std::endl;
+    return;
+  }
+  */
+  /*
+  // packet loss rate = 5%
+  if (number >= 0 && number < 5) {
+    return;
+  }
+  */
+  /*
+  // packet loss rate = 10%
+  if (number >= 0 && number < 10) {
+    return;
+  }
+  */
+
   App::OnData(data); // tracing inside
 
   NS_LOG_FUNCTION(this << data);
@@ -222,6 +272,13 @@ Consumer::OnData(shared_ptr<const Data> data)
 
   // This could be a problem......
   uint32_t seq = data->getName().at(-1).toSequenceNumber();
+
+  // if the data is for pre-fetch interest, drop it!
+  if (pre_fetch.find(seq) != pre_fetch.end()) {
+    pre_fetch.erase(seq);
+    NS_LOG_INFO("< Pre-Fetch DATA: " << seq << ", DROP!");
+    return;
+  }
   NS_LOG_INFO("< DATA for " << seq);
 
   int hopCount = 0;
@@ -232,6 +289,14 @@ Consumer::OnData(shared_ptr<const Data> data)
   NS_LOG_DEBUG("Hop count: " << hopCount);
 
   SeqTimeoutsContainer::iterator entry = m_seqLastDelay.find(seq);
+
+  // calculate the current real rtt
+  assert(entry != m_seqLastDelay.end());
+  int64_t cur_real_rtt = (Simulator::Now() - entry->time).GetMicroSeconds();
+
+  // calculate the corresponding retx count
+  int cur_retx_count = m_seqRetxCounts[seq];
+
   if (entry != m_seqLastDelay.end()) {
     m_lastRetransmittedInterestDataDelay(this, seq, Simulator::Now() - entry->time, hopCount);
   }
@@ -249,6 +314,16 @@ Consumer::OnData(shared_ptr<const Data> data)
   m_retxSeqs.erase(seq);
 
   m_rtt->AckSeq(SequenceNumber32(seq));
+
+  // calculate the current estimated rtt
+  int64_t cur_est_rtt = m_rtt->GetCurrentEstimate().GetMicroSeconds();
+  // add the current RttInfo to the recent_rtt  deque
+  if (recent_rtt.size() == kRttVectorMaxSize) {
+    recent_rtt.pop_front();
+  }
+  recent_rtt.push_back(RttInfo(cur_real_rtt, cur_est_rtt, cur_retx_count));
+  // store the data (seq)
+  data_cache.insert(seq);
 }
 
 void
@@ -290,6 +365,16 @@ Consumer::WillSendOutInterest(uint32_t sequenceNumber)
   m_seqRetxCounts[sequenceNumber]++;
 
   m_rtt->SentSeq(SequenceNumber32(sequenceNumber), 1);
+}
+
+bool
+Consumer::GetSeqFromCache(uint32_t seq)
+{
+  if (data_cache.find(seq) == data_cache.end()) {
+    return false;
+  }
+  data_cache.erase(seq);
+  return true;
 }
 
 } // namespace ndn

@@ -35,6 +35,7 @@ namespace ns3 {
 namespace ndn {
 
 NS_OBJECT_ENSURE_REGISTERED(ConsumerCbr);
+static const double kDisplayRate = 1.0;
 
 TypeId
 ConsumerCbr::GetTypeId(void)
@@ -69,6 +70,7 @@ ConsumerCbr::ConsumerCbr()
 {
   NS_LOG_FUNCTION_NOARGS();
   m_seqMax = std::numeric_limits<uint32_t>::max();
+  exp_seq = 0;
 }
 
 ConsumerCbr::~ConsumerCbr()
@@ -84,11 +86,27 @@ ConsumerCbr::ScheduleNextPacket()
   if (m_firstTime) {
     m_sendEvent = Simulator::Schedule(Seconds(0.0), &Consumer::SendPacket, this);
     m_firstTime = false;
+    // start timer for dispalying video data
+    Simulator::Schedule(Seconds(1.0 / kDisplayRate), &ConsumerCbr::DisplayData, this);
   }
   else if (!m_sendEvent.IsRunning())
     m_sendEvent = Simulator::Schedule((m_random == 0) ? Seconds(1.0 / m_frequency)
                                                       : Seconds(m_random->GetValue()),
                                       &Consumer::SendPacket, this);
+}
+
+void
+ConsumerCbr::DisplayData()
+{
+  bool is_fetch = Consumer::GetSeqFromCache(exp_seq);
+  if (is_fetch == true) {
+    NS_LOG_INFO("Displaying Seq: " << exp_seq);
+    exp_seq++;
+  }
+  else {
+    NS_LOG_INFO("Get Stuck for Seq: " << exp_seq);
+  }
+  Simulator::Schedule(Seconds(1.0 / kDisplayRate), &ConsumerCbr::DisplayData, this);
 }
 
 void
