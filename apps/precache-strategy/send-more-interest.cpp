@@ -18,20 +18,26 @@ namespace ns3 {
  * @return The seq(s) of packet to be sent
  */
 std::vector<uint32_t>
-moreInterestsToSend(uint32_t seqJustSent, const std::vector<double>& rttVec)
+moreInterestsToSend(uint32_t seqJustSent, std::deque<ns3::ndn::Consumer::RttInfo> rttVec)
 {
+  if (rttVec.size() < 2) return std::vector<uint32_t>(0);
   // ordinary least squares of line regression
   double sumX = 0;
   double sumY = 0;
   double sumXY = 0;
   double sumXX = 0;
 
-  for (int i = 0; i < rttVec.size(); i++) {
-    sumX += i+1;
-    sumY += rttVec[i];
-    sumXY += (i+1) * rttVec[i];
-    sumXX += (i+1) * (i+1);
+  int index = 1;
+  auto it = rttVec.begin();
+  while (it != rttVec.end()) {
+    sumX += index;
+    sumY += it->real_rtt;;
+    sumXY += index * it->real_rtt;
+    sumXX += index * index;
+    it++;
+    index++;
   }
+
   double aveX = sumX / rttVec.size();
   double aveY = sumY / rttVec.size();
   double rate = sumXY - rttVec.size() * aveX * aveY;
@@ -39,7 +45,7 @@ moreInterestsToSend(uint32_t seqJustSent, const std::vector<double>& rttVec)
 
   // if the station is getting far from Access Point/Base Station
   // pre-send an Interest with seq = seqJustSent + 5
-  vector<uint32_t> result;
+  std::vector<uint32_t> result;
   if (rate > 0) {
     result.push_back(seqJustSent + 5);
   }
