@@ -1,13 +1,13 @@
 rawData <- readLines("../../log2.txt")
 
-dataPattern <- "^\\+([.0-9]*).*DATA for ([0-9]*)$"
+dataPattern <- "^\\+([.0-9]*).* < DATA for ([0-9]*)$"
 dataData <- regmatches(rawData, gregexpr(dataPattern, rawData))
 dataData <- dataData[grep(dataPattern, dataData)]
 for (i in 1:length(dataData)) {
   dataData[i] <- sub(dataPattern, "\\1 \\2", dataData[i])
 }
 
-interestPattern <- "^\\+([.0-9]*).*Interest for ([0-9]*)$"
+interestPattern <- "^\\+([.0-9]*).* > Interest for ([0-9]*)$"
 interestData <- regmatches(rawData, gregexpr(interestPattern, rawData))
 interestData <- interestData[grep(interestPattern, interestData)]
 for (i in 1:length(interestData)) {
@@ -51,4 +51,4 @@ hopdf <- data.frame(hopnumber = numeric(length(hopData)),
 for (i in 1:length(hopData)) {
   hopdf$hopnumber[i] = as.numeric(hopData[i])
 }
-plot(hopdf$hopnumber)
+plot(hopdf$hopnumber[0:30])
