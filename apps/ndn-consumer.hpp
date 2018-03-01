@@ -107,18 +107,10 @@ public:
   typedef void (*LastRetransmittedInterestDataDelayCallback)(Ptr<App> app, uint32_t seqno, Time delay, int32_t hopCount);
   typedef void (*FirstInterestDataDelayCallback)(Ptr<App> app, uint32_t seqno, Time delay, uint32_t retxCount, int32_t hopCount);
 
-  struct RttInfo {
-    RttInfo(int64_t _real_rtt, int64_t _est_rtt, int _retx_count)
-    : real_rtt(_real_rtt)
-    , est_rtt(_est_rtt)
-    , retx_count(_retx_count)
-    {
-
-    }
-
-    int64_t real_rtt;
-    int64_t est_rtt;
-    int retx_count;
+  struct TrafficInfo {
+    std::deque<int64_t> real_rtt;
+    std::deque<int64_t> est_rtt;
+    std::deque<int64_t> retx_time;
   };
 
 protected:
@@ -237,7 +229,7 @@ protected:
 
 
   // used for pre-cache project
-  std::deque<RttInfo> recent_rtt;
+  TrafficInfo traffic_info;
   std::unordered_set<uint32_t> pre_fetch;
 
   std::set<uint32_t> data_cache;

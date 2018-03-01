@@ -48,6 +48,7 @@ namespace ndn {
 NS_OBJECT_ENSURE_REGISTERED(Consumer);
 
 static const int kRttVectorMaxSize = 5;
+static const int kRetxVectorMaxSize = 100;
 
 TypeId
 Consumer::GetTypeId(void)
@@ -209,7 +210,15 @@ Consumer::SendPacket()
 
   // get the pre-fetching-seq by precache strategy, if the current interest is not for retx
   if (!is_retx) {
-    std::vector<uint32_t> pre_fetch_seq = ns3::moreInterestsToSend(seq, recent_rtt);
+    // log the current real rtt vector
+    std::string rtt_str = "[";
+    for (auto entry: traffic_info.real_rtt) {
+      rtt_str += std::to_string(entry) + ",";
+    }
+    rtt_str += "]";
+    NS_LOG_INFO ("Current Real RTT: " << rtt_str );
+
+    std::vector<uint32_t> pre_fetch_seq = ns3::moreInterestsToSend(seq, traffic_info);
     for (auto seq: pre_fetch_seq) {
       pre_fetch.insert(seq);
       shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
@@ -221,7 +230,7 @@ Consumer::SendPacket()
       time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
       interest->setInterestLifetime(interestLifeTime);
 
-      NS_LOG_INFO("> Pre-Fetch Interest: " << seq);
+      NS_LOG_INFO("> Pre-Fetch Interest for: " << seq);
 
       m_transmittedInterests(interest, this, m_face);
       m_appLink->onReceiveInterest(*interest);
@@ -276,7 +285,7 @@ Consumer::OnData(shared_ptr<const Data> data)
   // if the data is for pre-fetch interest, drop it!
   if (pre_fetch.find(seq) != pre_fetch.end()) {
     pre_fetch.erase(seq);
-    NS_LOG_INFO("< Pre-Fetch DATA: " << seq << ", DROP!");
+    NS_LOG_INFO("< Pre-Fetch DATA for: " << seq << ", DROP!");
     return;
   }
   NS_LOG_INFO("< DATA for " << seq);
@@ -292,10 +301,7 @@ Consumer::OnData(shared_ptr<const Data> data)
 
   // calculate the current real rtt
   assert(entry != m_seqLastDelay.end());
-  int64_t cur_real_rtt = (Simulator::Now() - entry->time).GetMicroSeconds();
-
-  // calculate the corresponding retx count
-  int cur_retx_count = m_seqRetxCounts[seq];
+  int64_t cur_real_rtt = (Simulator::Now() - entry->time).GetNanoSeconds();
 
   if (entry != m_seqLastDelay.end()) {
     m_lastRetransmittedInterestDataDelay(this, seq, Simulator::Now() - entry->time, hopCount);
@@ -316,12 +322,14 @@ Consumer::OnData(shared_ptr<const Data> data)
   m_rtt->AckSeq(SequenceNumber32(seq));
 
   // calculate the current estimated rtt
-  int64_t cur_est_rtt = m_rtt->GetCurrentEstimate().GetMicroSeconds();
-  // add the current RttInfo to the recent_rtt  deque
-  if (recent_rtt.size() == kRttVectorMaxSize) {
-    recent_rtt.pop_front();
+  int64_t cur_est_rtt = m_rtt->GetCurrentEstimate().GetNanoSeconds();
+  // add the current traffic info
+  if (traffic_info.real_rtt.size() == kRttVectorMaxSize) {
+    traffic_info.real_rtt.pop_front();
+    traffic_info.est_rtt.pop_front();
   }
-  recent_rtt.push_back(RttInfo(cur_real_rtt, cur_est_rtt, cur_retx_count));
+  traffic_info.real_rtt.push_back(cur_real_rtt);
+  traffic_info.est_rtt.push_back(cur_est_rtt);
   // store the data (seq)
   data_cache.insert(seq);
 }
@@ -348,6 +356,12 @@ Consumer::OnTimeout(uint32_t sequenceNumber)
                  1); // make sure to disable RTT calculation for this sample
   m_retxSeqs.insert(sequenceNumber);
   ScheduleNextPacket();
+
+  // record the retx info
+  if (traffic_info.retx_time.size() == kRetxVectorMaxSize) {
+    traffic_info.retx_time.pop_front();
+  }
+  traffic_info.retx_time.push_back(Simulator::Now().GetNanoSeconds());
 }
 
 void
