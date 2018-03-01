@@ -18,9 +18,9 @@ namespace ns3 {
  * @return The seq(s) of packet to be sent
  */
 std::vector<uint32_t>
-moreInterestsToSend(uint32_t seqJustSent, std::deque<ns3::ndn::Consumer::RttInfo> rttVec)
+moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo)
 {
-  if (rttVec.size() < 2) return std::vector<uint32_t>(0);
+  if (trafficInfo.real_rtt.size() < 2) return std::vector<uint32_t>(0);
   // ordinary least squares of line regression
   double sumX = 0;
   double sumY = 0;
@@ -28,11 +28,12 @@ moreInterestsToSend(uint32_t seqJustSent, std::deque<ns3::ndn::Consumer::RttInfo
   double sumXX = 0;
 
   int index = 1;
+  auto rttVec = trafficInfo.real_rtt;
   auto it = rttVec.begin();
   while (it != rttVec.end()) {
     sumX += index;
-    sumY += it->real_rtt;;
-    sumXY += index * it->real_rtt;
+    sumY += *it;;
+    sumXY += index * (*it);
     sumXX += index * index;
     it++;
     index++;

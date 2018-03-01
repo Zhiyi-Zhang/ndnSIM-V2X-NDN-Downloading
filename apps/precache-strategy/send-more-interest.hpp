@@ -14,7 +14,7 @@
 namespace ns3 {
 
 std::vector<uint32_t>
-moreInterestsToSend(uint32_t seqJustSent, std::deque<ns3::ndn::Consumer::RttInfo> rttVec);
+moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo);
 
 
 
