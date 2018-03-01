@@ -1,4 +1,4 @@
-rawData <- readLines("../../log.txt")
+rawData <- readLines("../../log2.txt")
 
 dataPattern <- "^\\+([.0-9]*).*DATA for ([0-9]*)$"
 dataData <- regmatches(rawData, gregexpr(dataPattern, rawData))
@@ -14,6 +14,12 @@ for (i in 1:length(interestData)) {
   interestData[i] <- sub(interestPattern, "\\1 \\2", interestData[i])
 }
 
+hopcountPattern <- "^\\+.*Hop count: ([0-9]*)$"
+hopData <- regmatches(rawData, gregexpr(hopcountPattern, rawData))
+hopData <- hopData[grep(hopcountPattern, hopData)]
+for (i in 1:length(hopData)) {
+  hopData[i] <- sub(hopcountPattern, "\\1", hopData[i])
+}
 
 df <- data.frame(sending = numeric(length(dataData)),
                  recieving = numeric(length(dataData)),
@@ -24,17 +30,25 @@ for (i in 1:length(dataData)) {
   item <- strsplit(as.character(dataData[i]), " ")
   index <- as.numeric(item[[1]][2])
   recieveTime <- as.numeric(item[[1]][1])
-  for (j in 1:length(interestData)) {
+  for (j in length(interestData):1) {
     item2 <- strsplit(as.character(interestData[j]), " ")
     index2 <- as.numeric(item2[[1]][2])
     sendTime <- as.numeric(item2[[1]][1])
     if (index2 - index == 0) {
       df$sending[index] <- sendTime
       df$recieving[index] <- recieveTime
-      df$rtt[index] <- (recieveTime*1000000000 - sendTime*1000000000) - 214296000
+      df$rtt[index] <- (recieveTime*1000000000 - sendTime*1000000000)# - 214296000
       break
     }
   }
 }
 
 plot(df$rtt)
+
+
+hopdf <- data.frame(hopnumber = numeric(length(hopData)),
+                 stringsAsFactors = FALSE)
+for (i in 1:length(hopData)) {
+  hopdf$hopnumber[i] = as.numeric(hopData[i])
+}
+plot(hopdf$hopnumber)

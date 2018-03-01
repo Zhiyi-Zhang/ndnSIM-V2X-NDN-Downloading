@@ -20,7 +20,6 @@
 #include <vector>
 #include <string>
 
-
 NS_LOG_COMPONENT_DEFINE ("step01");
 
 using namespace std;
@@ -215,7 +214,24 @@ int main (int argc, char *argv[])
   ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "1000");
   //ndnHelper.SetDefaultRoutes(true);
   //ndnHelper.SetOldContentStore("ns3::ndn::cs::Nocache");
-  ndnHelper.InstallAll();
+  // ndnHelper.InstallAll();
+  ndnHelper.Install(Names::Find<Node>("root"));
+  ndnHelper.Install(Names::Find<Node>("ap1"));
+  ndnHelper.Install(Names::Find<Node>("ap2"));
+  ndnHelper.Install(Names::Find<Node>("ap3"));
+  ndnHelper.Install(Names::Find<Node>("ap4"));
+  ndnHelper.Install(Names::Find<Node>("ap5"));
+  ndnHelper.Install(Names::Find<Node>("ap6"));
+  ndnHelper.Install(Names::Find<Node>("r1"));
+  ndnHelper.Install(Names::Find<Node>("r2"));
+  ndnHelper.Install(Names::Find<Node>("r3"));
+  ndnHelper.Install(Names::Find<Node>("r4"));
+  ndnHelper.Install(Names::Find<Node>("r5"));
+  ndnHelper.Install(Names::Find<Node>("r6"));
+
+  ndn::StackHelper ndnHelper1;
+  ndnHelper1.SetOldContentStore("ns3::ndn::cs::Nocache");
+  ndnHelper1.Install(consumers);
 
   // Choosing forwarding strategy
   ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/best-route");
