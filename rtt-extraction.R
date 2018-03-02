@@ -14,6 +14,18 @@ for (i in 1:length(interestData)) {
   interestData[i] <- sub(interestPattern, "\\1 \\2", interestData[i])
 }
 
+PreFetchInterestPattern <- "^\\+([.0-9]*).* > Pre-Fetch Interest.*([0-9]*)$"
+PreFetchInterestData <- regmatches(rawData, gregexpr(PreFetchInterestPattern, rawData))
+PreFetchInterestData <-PreFetchInterestData[grep(PreFetchInterestPattern, PreFetchInterestData)]
+duplicatedInterestNumber <- length(PreFetchInterestData)
+duplicatedInterestRatio <- duplicatedInterestNumber/(length(interestData) + duplicatedInterestNumber)
+
+DroppedPreFetchDataPattern <- "^\\+([.0-9]*).*< Pre.Fetch DATA..([0-9]*)..DROP.$"
+DroppedPreFetchDataData <- regmatches(rawData, gregexpr(DroppedPreFetchDataPattern, rawData))
+DroppedPreFetchDataData <-DroppedPreFetchDataData[grep(DroppedPreFetchDataPattern, DroppedPreFetchDataData)]
+DroppedPreFetchDataNumber <- length(DroppedPreFetchDataData)
+DroppedPreFetchDataRatio <- DroppedPreFetchDataNumber/(length(dataData) + DroppedPreFetchDataNumber)
+
 hopcountPattern <- "^\\+.*Hop count: ([0-9]*)$"
 hopData <- regmatches(rawData, gregexpr(hopcountPattern, rawData))
 hopData <- hopData[grep(hopcountPattern, hopData)]
@@ -51,4 +63,4 @@ hopdf <- data.frame(hopnumber = numeric(length(hopData)),
 for (i in 1:length(hopData)) {
   hopdf$hopnumber[i] = as.numeric(hopData[i])
 }
-plot(hopdf$hopnumber[0:30])
+plot(hopdf$hopnumber)
