@@ -16,7 +16,11 @@ namespace ns3 {
 std::vector<uint32_t>
 moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo);
 
+std::vector<uint32_t>
+oneHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo);
 
+std::vector<uint32_t>
+MultiHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo);
 
 }
 #endif // NDNSIM_EXAMPLES_PRECACHE_STRATEGY_SEND_MORE_INTEREST_HPP

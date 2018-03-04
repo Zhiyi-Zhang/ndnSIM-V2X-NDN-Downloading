@@ -53,4 +53,16 @@ moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo traffi
   return result;
 }
 
+std::vector<uint32_t>
+oneHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo)
+{
+  return std::vector<uint32_t>(0);
+}
+
+std::vector<uint32_t>
+MultiHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo)
+{
+  return std::vector<uint32_t>(0);
+}
+
 } // namespace ns3
