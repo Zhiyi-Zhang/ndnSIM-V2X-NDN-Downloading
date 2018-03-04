@@ -49,6 +49,10 @@ NS_OBJECT_ENSURE_REGISTERED(Consumer);
 
 static const int kRttVectorMaxSize = 5;
 static const int kRetxVectorMaxSize = 100;
+static const bool step0 = true;
+static const bool step1 = true;
+static const bool step2 = false;
+static const bool step3 = false;
 
 TypeId
 Consumer::GetTypeId(void)
@@ -210,30 +214,52 @@ Consumer::SendPacket()
 
   // get the pre-fetching-seq by precache strategy, if the current interest is not for retx
   if (!is_retx) {
-    // log the current real rtt vector
-    std::string rtt_str = "[";
-    for (auto entry: traffic_info.real_rtt) {
-      rtt_str += std::to_string(entry) + ",";
+    if (step0 == true) {
+      // log the current real rtt vector
+      std::string rtt_str = "[";
+      for (auto entry: traffic_info.real_rtt) {
+        rtt_str += std::to_string(entry) + ",";
+      }
+      rtt_str += "]";
+      NS_LOG_INFO ("Current Real RTT: " << rtt_str );
+
+      std::vector<uint32_t> pre_fetch_seq = ns3::moreInterestsToSend(seq, traffic_info);
+      for (auto seq: pre_fetch_seq) {
+        pre_fetch.insert(seq);
+        shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
+        nameWithSequence->appendSequenceNumber(seq);
+
+        shared_ptr<Interest> interest = make_shared<Interest>();
+        interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
+        interest->setName(*nameWithSequence);
+        time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
+        interest->setInterestLifetime(interestLifeTime);
+
+        NS_LOG_INFO("> Pre-Fetch Interest for: " << seq);
+
+        m_transmittedInterests(interest, this, m_face);
+        m_appLink->onReceiveInterest(*interest);
+      }
     }
-    rtt_str += "]";
-    NS_LOG_INFO ("Current Real RTT: " << rtt_str );
+    if (step1 == true) {
+      // prefetch by one-hop V2V communiaction
+      std::vector<uint32_t> pre_fetch_seq = ns3::oneHopV2VPrefetch(seq, traffic_info);
+      for (auto seq: pre_fetch_seq) {
+        shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
+        nameWithSequence->append("prefetch");
+        nameWithSequence->appendSequenceNumber(seq);
 
-    std::vector<uint32_t> pre_fetch_seq = ns3::moreInterestsToSend(seq, traffic_info);
-    for (auto seq: pre_fetch_seq) {
-      pre_fetch.insert(seq);
-      shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
-      nameWithSequence->appendSequenceNumber(seq);
+        shared_ptr<Interest> interest = make_shared<Interest>();
+        interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
+        interest->setName(*nameWithSequence);
+        time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
+        interest->setInterestLifetime(interestLifeTime);
 
-      shared_ptr<Interest> interest = make_shared<Interest>();
-      interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
-      interest->setName(*nameWithSequence);
-      time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
-      interest->setInterestLifetime(interestLifeTime);
+        NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication for: " << seq);
 
-      NS_LOG_INFO("> Pre-Fetch Interest for: " << seq);
-
-      m_transmittedInterests(interest, this, m_face);
-      m_appLink->onReceiveInterest(*interest);
+        m_transmittedInterests(interest, this, m_face);
+        m_appLink->onReceiveInterest(*interest);
+      }
     }
   }
 
