@@ -32,17 +32,18 @@ DroppedPreFetchDataNumber <- length(DroppedPreFetchDataData)
 DroppedPreFetchDataRatio <- DroppedPreFetchDataNumber/(length(dataData) + DroppedPreFetchDataNumber)
 
 # Extract Hop Data
-hopcountPattern <- "^\\+.*Hop count: ([0-9]*)$"
+hopcountPattern <- "^\\+([.0-9]*).*Hop count: ([0-9]*)$"
 hopData <- regmatches(rawData, gregexpr(hopcountPattern, rawData))
 hopData <- hopData[grep(hopcountPattern, hopData)]
 for (i in 1:length(hopData)) {
-  hopData[i] <- sub(hopcountPattern, "\\1", hopData[i])
+  hopData[i] <- sub(hopcountPattern, "\\1 \\2", hopData[i])
 }
 
 # Calculate RTT
 df <- data.frame(sending = numeric(length(dataData)),
                  recieving = numeric(length(dataData)),
                  rtt = numeric(length(dataData)),
+                 hopcount = numeric(length(dataData)),
                  stringsAsFactors = FALSE)
 
 for (i in 1:length(dataData)) {
@@ -60,15 +61,10 @@ for (i in 1:length(dataData)) {
       break
     }
   }
+  item3 <- strsplit(as.character(hopData[i]), " ")
+  df$hopcount[i] <- as.numeric(item3[[1]][2])
 }
+
 plot(df$rtt[1:100], xlab="Data ID", ylab="Round-Trip Time")
 rttsum <- summary(df$rtt[1:100])
-
-
-# Calculate hop count
-hopdf <- data.frame(hopnumber = numeric(length(hopData)),
-                 stringsAsFactors = FALSE)
-for (i in 1:length(hopData)) {
-  hopdf$hopnumber[i] = as.numeric(hopData[i])
-}
-plot(hopdf$hopnumber[1:100], xlab="Data ID", ylab="Hop Number")
+plot(df$hopcount[1:100], xlab="Data ID", ylab="Hop Number")
