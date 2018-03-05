@@ -20,11 +20,46 @@
 #include <vector>
 #include <string>
 
+#include <boost/algorithm/string.hpp>
+
+#include "ns3/wifi-net-device.h"
+#include "ns3/sta-wifi-mac.h"
+
+#include "ns3/ndnSIM/apps/ndn-consumer-cbr.hpp"
+
 NS_LOG_COMPONENT_DEFINE ("step01");
 
 using namespace std;
 
 namespace ns3 {
+
+void
+StaAssociation(string context, Mac48Address maddr)
+{
+  vector<string> tokens;
+  boost::split(tokens, context, boost::is_any_of( "/" ));
+  int nodeId = atoi(tokens[2].c_str());
+  int deviceId = atoi(tokens[4].c_str());
+  NS_LOG_INFO("STA Associated: Node " << nodeId << ", Device " << deviceId/* << " MAC" << mac->GetAddress()*/ << ", to MAC: " << maddr
+              << ", context: " << context);
+
+  Ptr<Node> node = NodeList::GetNode(nodeId);
+  // Ptr<Application> app = node->GetApplication(0);
+
+  Ptr<ns3::WifiNetDevice> wifiDev = node->GetDevice(deviceId)->GetObject<ns3::WifiNetDevice>();
+  if (wifiDev != nullptr) {
+    Ptr<ns3::StaWifiMac> staMac = wifiDev->GetMac()->GetObject<ns3::StaWifiMac>();
+    if (staMac != nullptr) {
+      Address dest = staMac->GetBssid();
+      Ssid ssid = staMac->GetSsid();
+      NS_LOG_INFO("Node " << nodeId << ", Device " << deviceId << ", Mac: " << staMac->GetAddress()
+                  << ", Bssid: " << dest << ", Ssid: " << ssid);
+      ndn::ConsumerCbr* consumerApp = dynamic_cast<ndn::ConsumerCbr*>(&(*node->GetApplication(0)));
+      consumerApp->ConnectedToNewAp(deviceId);
+    }
+  }
+
+}
 
 /**
  * DESCRIPTION:
@@ -277,6 +312,9 @@ int main (int argc, char *argv[])
   }
 
   //ndn::CsTracer::Install(routers[0],"simple-wifi-mobility-trace.txt", Seconds(1.0));
+
+  Config::Connect ("/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/$ns3::StaWifiMac/Assoc",
+                   MakeCallback(&ns3::StaAssociation));
 
   Simulator::Run ();
   Simulator::Destroy ();

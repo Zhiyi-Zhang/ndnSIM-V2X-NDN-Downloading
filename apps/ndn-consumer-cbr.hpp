@@ -43,6 +43,9 @@ public:
   ConsumerCbr();
   virtual ~ConsumerCbr();
 
+  void
+  ConnectedToNewAp(int deviceId);
+
 protected:
   /**
    * \brief Constructs the Interest packet and sends it using a callback to the underlying NDN
