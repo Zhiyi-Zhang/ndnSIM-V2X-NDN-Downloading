@@ -1,9 +1,6 @@
 # Read Raw Data
 rawData <- readLines("../../log2.txt")
-starttp <- 2.7
-endtp <- 3
-
-getTimeIntervalData <- function(t1, t2, df)
+options(scipen=999)
 
 # Extract Data Data
 dataPattern <- "^\\+([.0-9]*).* < DATA for ([0-9]*)$"
@@ -71,6 +68,25 @@ for (i in 1:length(dataData)) {
   df$hopcount[i] <- as.numeric(item3[[1]][2])
 }
 
+# show plot
 plot(df$rtt[1:100], xlab="Data ID", ylab="Round-Trip Time")
-rttsum <- summary(df$rtt[1:100])
 plot(df$hopcount[1:100], xlab="Data ID", ylab="Hop Number")
+rttsum <- summary(df$rtt[1:100])
+
+# time interval function
+starttp <- 2.7
+endtp <- 3.5
+
+startIndex <- 0
+endIndex <- 0
+for (rowNumber in 1:nrow(df)) {
+  if (df[rowNumber, "sending"] >= starttp && startIndex == 0) {
+    startIndex <- rowNumber
+  }
+  if (df[rowNumber, "recieving"] >= endtp && endIndex == 0) {
+    endIndex <- rowNumber - 1
+    break;
+  }
+}
+plot(df$rtt[startIndex:endIndex], xlab="Data ID", ylab="Round-Trip Time")
+plot(df$hopcount[startIndex:endIndex], xlab="Data ID", ylab="Hop Number")
