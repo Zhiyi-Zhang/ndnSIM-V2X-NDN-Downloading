@@ -1,5 +1,6 @@
 # Read Raw Data
 rawData <- readLines("../../log2.txt")
+options(scipen=999)
 
 # Extract Data Data
 dataPattern <- "^\\+([.0-9]*).* < DATA for ([0-9]*)$"
@@ -40,7 +41,8 @@ for (i in 1:length(hopData)) {
 }
 
 # Calculate RTT
-df <- data.frame(sending = numeric(length(dataData)),
+df <- data.frame(index = numeric(length(dataData)),
+                 sending = numeric(length(dataData)),
                  recieving = numeric(length(dataData)),
                  rtt = numeric(length(dataData)),
                  hopcount = numeric(length(dataData)),
@@ -49,15 +51,16 @@ df <- data.frame(sending = numeric(length(dataData)),
 for (i in 1:length(dataData)) {
   item <- strsplit(as.character(dataData[i]), " ")
   index <- as.numeric(item[[1]][2])
+  df$index[i] < index
   recieveTime <- as.numeric(item[[1]][1])
   for (j in length(interestData):1) {
     item2 <- strsplit(as.character(interestData[j]), " ")
     index2 <- as.numeric(item2[[1]][2])
     sendTime <- as.numeric(item2[[1]][1])
     if (index2 - index == 0) {
-      df$sending[index] <- sendTime
-      df$recieving[index] <- recieveTime
-      df$rtt[index] <- (recieveTime*1000000000 - sendTime*1000000000)# - 214296000
+      df$sending[i] <- sendTime
+      df$recieving[i] <- recieveTime
+      df$rtt[i] <- (recieveTime*1000000000 - sendTime*1000000000)# - 214296000
       break
     }
   }
@@ -65,6 +68,25 @@ for (i in 1:length(dataData)) {
   df$hopcount[i] <- as.numeric(item3[[1]][2])
 }
 
+# show plot
 plot(df$rtt[1:100], xlab="Data ID", ylab="Round-Trip Time")
-rttsum <- summary(df$rtt[1:100])
 plot(df$hopcount[1:100], xlab="Data ID", ylab="Hop Number")
+rttsum <- summary(df$rtt[1:100])
+
+# time interval function
+starttp <- 2.7
+endtp <- 3.5
+
+startIndex <- 0
+endIndex <- 0
+for (rowNumber in 1:nrow(df)) {
+  if (df[rowNumber, "sending"] >= starttp && startIndex == 0) {
+    startIndex <- rowNumber
+  }
+  if (df[rowNumber, "recieving"] >= endtp && endIndex == 0) {
+    endIndex <- rowNumber - 1
+    break;
+  }
+}
+plot(df$rtt[startIndex:endIndex], xlab="Data ID", ylab="Round-Trip Time")
+plot(df$hopcount[startIndex:endIndex], xlab="Data ID", ylab="Hop Number")

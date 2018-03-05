@@ -49,41 +49,50 @@ NS_OBJECT_ENSURE_REGISTERED(Consumer);
 
 static const int kRttVectorMaxSize = 5;
 static const int kRetxVectorMaxSize = 100;
-static const bool step0 = true;
-static const bool step1 = true;
-static const bool step2 = false;
-static const bool step3 = false;
 
 TypeId
 Consumer::GetTypeId(void)
 {
   static TypeId tid =
     TypeId("ns3::ndn::Consumer")
-      .SetGroupName("Ndn")
-      .SetParent<App>()
-      .AddAttribute("StartSeq", "Initial sequence number", IntegerValue(0),
-                    MakeIntegerAccessor(&Consumer::m_seq), MakeIntegerChecker<int32_t>())
+    .SetGroupName("Ndn")
+    .SetParent<App>()
+    .AddAttribute("StartSeq", "Initial sequence number", IntegerValue(0),
+                  MakeIntegerAccessor(&Consumer::m_seq), MakeIntegerChecker<int32_t>())
 
-      .AddAttribute("Prefix", "Name of the Interest", StringValue("/"),
-                    MakeNameAccessor(&Consumer::m_interestName), MakeNameChecker())
-      .AddAttribute("LifeTime", "LifeTime for interest packet", StringValue("2s"),
-                    MakeTimeAccessor(&Consumer::m_interestLifeTime), MakeTimeChecker())
+    .AddAttribute("Prefix", "Name of the Interest", StringValue("/"),
+                  MakeNameAccessor(&Consumer::m_interestName), MakeNameChecker())
 
-      .AddAttribute("RetxTimer",
-                    "Timeout defining how frequent retransmission timeouts should be checked",
-                    StringValue("50ms"),
-                    MakeTimeAccessor(&Consumer::GetRetxTimer, &Consumer::SetRetxTimer),
-                    MakeTimeChecker())
+    .AddAttribute("LifeTime", "LifeTime for interest packet", StringValue("2s"),
+                  MakeTimeAccessor(&Consumer::m_interestLifeTime), MakeTimeChecker())
 
-      .AddTraceSource("LastRetransmittedInterestDataDelay",
-                      "Delay between last retransmitted Interest and received Data",
-                      MakeTraceSourceAccessor(&Consumer::m_lastRetransmittedInterestDataDelay),
-                      "ns3::ndn::Consumer::LastRetransmittedInterestDataDelayCallback")
+    .AddAttribute("Step1", "Application support to step1", BooleanValue(false),
+                  MakeBooleanAccessor(&Consumer::m_step1), MakeBooleanChecker())
 
-      .AddTraceSource("FirstInterestDataDelay",
-                      "Delay between first transmitted Interest and received Data",
-                      MakeTraceSourceAccessor(&Consumer::m_firstInterestDataDelay),
-                      "ns3::ndn::Consumer::FirstInterestDataDelayCallback");
+    .AddAttribute("Step2", "Application support to step2", BooleanValue(false),
+                  MakeBooleanAccessor(&Consumer::m_step2), MakeBooleanChecker())
+
+    .AddAttribute("Step3", "Application support to step3", BooleanValue(false),
+                  MakeBooleanAccessor(&Consumer::m_step3), MakeBooleanChecker())
+
+    .AddAttribute("Step4", "Application support to step4", BooleanValue(false),
+                  MakeBooleanAccessor(&Consumer::m_step4), MakeBooleanChecker())
+
+    .AddAttribute("RetxTimer",
+                  "Timeout defining how frequent retransmission timeouts should be checked",
+                  StringValue("50ms"),
+                  MakeTimeAccessor(&Consumer::GetRetxTimer, &Consumer::SetRetxTimer),
+                  MakeTimeChecker())
+
+    .AddTraceSource("LastRetransmittedInterestDataDelay",
+                    "Delay between last retransmitted Interest and received Data",
+                    MakeTraceSourceAccessor(&Consumer::m_lastRetransmittedInterestDataDelay),
+                    "ns3::ndn::Consumer::LastRetransmittedInterestDataDelayCallback")
+
+    .AddTraceSource("FirstInterestDataDelay",
+                    "Delay between first transmitted Interest and received Data",
+                    MakeTraceSourceAccessor(&Consumer::m_firstInterestDataDelay),
+                    "ns3::ndn::Consumer::FirstInterestDataDelayCallback");
 
   return tid;
 }
@@ -226,7 +235,7 @@ Consumer::SendPacket()
 
   // get the pre-fetching-seq by precache strategy, if the current interest is not for retx
   if (!is_retx) {
-    if (step0 == true) {
+    if (m_step1 == true) {
       // log the current real rtt vector
       std::string rtt_str = "[";
       for (auto entry: traffic_info.real_rtt) {
@@ -253,7 +262,7 @@ Consumer::SendPacket()
         m_appLink->onReceiveInterest(*interest);
       }
     }
-    if (step1 == true) {
+    if (m_step2 == true) {
       // prefetch by one-hop V2V communiaction
       // v2v prefetch interest: /pretch/bssid/prefix/seq
       std::vector<uint32_t> pre_fetch_seq = ns3::oneHopV2VPrefetch(seq, traffic_info);
