@@ -27,6 +27,8 @@
 #include "ns3/random-variable-stream.h"
 #include "ns3/nstime.h"
 #include "ns3/data-rate.h"
+#include "ns3/wifi-net-device.h"
+#include "ns3/sta-wifi-mac.h"
 
 #include "ns3/ndnSIM/model/ndn-common.hpp"
 #include "ns3/ndnSIM/utils/ndn-rtt-estimator.hpp"
@@ -60,6 +62,9 @@ public:
    */
   Consumer();
   virtual ~Consumer(){};
+
+  Address
+  GetCurrentAP();
 
   // From App
   virtual void

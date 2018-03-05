@@ -56,7 +56,10 @@ moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo traffi
 std::vector<uint32_t>
 oneHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo)
 {
-  return std::vector<uint32_t>(0);
+  std::vector<uint32_t> ret;
+  ret.push_back(seqJustSent + 5);
+  // return std::vector<uint32_t>(0);
+  return ret;
 }
 
 std::vector<uint32_t>

@@ -163,7 +163,8 @@ int main (int argc, char *argv[])
   ////// Setup AP.
   NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default();
   wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(ssid),
-                  "BeaconGeneration", BooleanValue(false));
+                    "BeaconGeneration", BooleanValue(false));
+
   for (int i = 0; i < bottomrow; i++) {
     NetDeviceContainer apDevice = wifi.Install(wifiPhy, wifiMac, wifiApNodes[i]);
     devices.Add(apDevice);

@@ -21,7 +21,6 @@
 #define NDN_CONSUMER_CBR_H
 
 #include "ns3/ndnSIM/model/ndn-common.hpp"
-
 #include "ndn-consumer.hpp"
 
 namespace ns3 {

@@ -99,6 +99,18 @@ Consumer::Consumer()
   m_rtt = CreateObject<RttMeanDeviation>();
 }
 
+Address
+Consumer::GetCurrentAP()
+{
+  Ptr<ns3::WifiNetDevice> wifiDev = GetNode()->GetDevice(0)->GetObject<ns3::WifiNetDevice>();
+  assert(wifiDev != nullptr);
+  Ptr<ns3::StaWifiMac> staMac = wifiDev->GetMac()->GetObject<ns3::StaWifiMac>();
+  assert(staMac != nullptr);
+  Address ap = staMac->GetBssid();
+  //std::cout << "App " << m_appId << " on Node " << GetNode()->GetId() << " connected to " << dest << std::endl;
+  return ap;
+}
+
 void
 Consumer::SetRetxTimer(Time retxTimer)
 {
@@ -243,10 +255,15 @@ Consumer::SendPacket()
     }
     if (step1 == true) {
       // prefetch by one-hop V2V communiaction
+      // v2v prefetch interest: /pretch/bssid/prefix/seq
       std::vector<uint32_t> pre_fetch_seq = ns3::oneHopV2VPrefetch(seq, traffic_info);
       for (auto seq: pre_fetch_seq) {
-        shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
-        nameWithSequence->append("prefetch");
+        shared_ptr<Name> nameWithSequence = make_shared<Name>(Name("/prefetch"));
+        Address ap = GetCurrentAP();
+        std::ostringstream os;
+        os << ap;
+        nameWithSequence->append(os.str().c_str());
+        nameWithSequence->append(m_interestName);
         nameWithSequence->appendSequenceNumber(seq);
 
         shared_ptr<Interest> interest = make_shared<Interest>();
@@ -255,7 +272,8 @@ Consumer::SendPacket()
         time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
         interest->setInterestLifetime(interestLifeTime);
 
-        NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication for: " << seq);
+        NS_LOG_INFO( "> Pre-Fetch Interest by One-hop V2V Communication for: " << seq );
+        NS_LOG_INFO( "> Pre-Fetch Interest name = " << nameWithSequence->toUri() );
 
         m_transmittedInterests(interest, this, m_face);
         m_appLink->onReceiveInterest(*interest);
