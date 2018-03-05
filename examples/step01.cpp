@@ -76,7 +76,7 @@ int main (int argc, char *argv[])
 
   int bottomrow = 6;            // number of AP nodes
   int spacing = 200;            // between bottom-row nodes
-  int range = 110;
+  int range = 90;
   double endtime = 20.0;
   double speed = (double)(bottomrow*spacing)/endtime; //setting speed to span full sim time
 

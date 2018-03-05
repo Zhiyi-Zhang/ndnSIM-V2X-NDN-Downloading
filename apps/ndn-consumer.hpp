@@ -238,6 +238,11 @@ protected:
   std::mt19937 rengine_;
 
   /// @endcond
+
+  bool m_step1;
+  bool m_step2;
+  bool m_step3;
+  bool m_step4;
 };
 
 } // namespace ndn
