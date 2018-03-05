@@ -1,5 +1,9 @@
 # Read Raw Data
 rawData <- readLines("../../log2.txt")
+starttp <- 2.7
+endtp <- 3
+
+getTimeIntervalData <- function(t1, t2, df)
 
 # Extract Data Data
 dataPattern <- "^\\+([.0-9]*).* < DATA for ([0-9]*)$"
@@ -40,7 +44,8 @@ for (i in 1:length(hopData)) {
 }
 
 # Calculate RTT
-df <- data.frame(sending = numeric(length(dataData)),
+df <- data.frame(index = numeric(length(dataData)),
+                 sending = numeric(length(dataData)),
                  recieving = numeric(length(dataData)),
                  rtt = numeric(length(dataData)),
                  hopcount = numeric(length(dataData)),
@@ -49,15 +54,16 @@ df <- data.frame(sending = numeric(length(dataData)),
 for (i in 1:length(dataData)) {
   item <- strsplit(as.character(dataData[i]), " ")
   index <- as.numeric(item[[1]][2])
+  df$index[i] < index
   recieveTime <- as.numeric(item[[1]][1])
   for (j in length(interestData):1) {
     item2 <- strsplit(as.character(interestData[j]), " ")
     index2 <- as.numeric(item2[[1]][2])
     sendTime <- as.numeric(item2[[1]][1])
     if (index2 - index == 0) {
-      df$sending[index] <- sendTime
-      df$recieving[index] <- recieveTime
-      df$rtt[index] <- (recieveTime*1000000000 - sendTime*1000000000)# - 214296000
+      df$sending[i] <- sendTime
+      df$recieving[i] <- recieveTime
+      df$rtt[i] <- (recieveTime*1000000000 - sendTime*1000000000)# - 214296000
       break
     }
   }
