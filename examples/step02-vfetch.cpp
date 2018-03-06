@@ -262,14 +262,20 @@ int main (int argc, char *argv[])
   producerHelper.SetPrefix("/youtube/video001");
   producerHelper.Install(producer);
 
-  // Prefetcher Helpers
-  ndn::AppHelper prefetcherHelper("PrefetcherApp");
-  prefetcherHelper.SetPrefix("/youtube/video001");
-  // consumerHelper.SetAttribute("RetxTimer", );
-  consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.1));
-
   // Calculate and install FIBs
   ndn::GlobalRoutingHelper::CalculateRoutes();
+
+  // Prefetcher Helpers
+  for (int i = 1; i < wifiSta; ++i) {
+    ndn::AppHelper prefetcherHelper("PrefetcherApp");
+    prefetcherHelper.SetAttribute("NodeID", UintegerValue(i));
+    prefetcherHelper.SetAttribute("Prefix", StringValue("/youtube/video001"));
+    prefetcherHelper.SetAttribute("MultiHop", BooleanValue(false));
+    prefetcherHelper.Install(consumers.Get(i)).Start(Seconds(0.1));
+    ndn::FibHelper::AddRoute(consumers.Get(i), "/prefetch", std::numeric_limits<int32_t>::max());
+    ndn::FibHelper::AddRoute(consumers.Get(i), "/youtube/video001", std::numeric_limits<int32_t>::max());
+  }
+  ndn::FibHelper::AddRoute(consumers.Get(0), "/prefetch", std::numeric_limits<int32_t>::max());
 
   // Tracing
   wifiPhy.EnablePcap("step01", devices);

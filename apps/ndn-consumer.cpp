@@ -106,6 +106,7 @@ Consumer::Consumer()
   NS_LOG_FUNCTION_NOARGS();
 
   m_rtt = CreateObject<RttMeanDeviation>();
+
 }
 
 Address
@@ -226,7 +227,7 @@ Consumer::SendPacket()
   time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
   interest->setInterestLifetime(interestLifeTime);
 
-  NS_LOG_INFO("> Interest for " << seq);
+  NS_LOG_INFO("> Interest for " << seq << " name = " << nameWithSequence->toUri() );
 
   WillSendOutInterest(seq);
 
@@ -268,12 +269,12 @@ Consumer::SendPacket()
       std::vector<uint32_t> pre_fetch_seq = ns3::oneHopV2VPrefetch(seq, traffic_info);
       for (auto seq: pre_fetch_seq) {
         shared_ptr<Name> nameWithSequence = make_shared<Name>(Name("/prefetch"));
+        nameWithSequence->append(m_interestName);
+        nameWithSequence->appendSequenceNumber(seq);
         Address ap = GetCurrentAP();
         std::ostringstream os;
         os << ap;
         nameWithSequence->append(os.str().c_str());
-        nameWithSequence->append(m_interestName);
-        nameWithSequence->appendSequenceNumber(seq);
 
         shared_ptr<Interest> interest = make_shared<Interest>();
         interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));

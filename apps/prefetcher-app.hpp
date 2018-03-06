@@ -6,6 +6,7 @@
 #include "ns3/string.h"
 #include "prefetcher-node.hpp"
 #include "ns3/uinteger.h"
+#include "ns3/boolean.h"
 
 namespace ns3 {
 
@@ -21,17 +22,30 @@ public:
       .AddAttribute("Prefix", "Prefix for prefetcher", StringValue("/"),
                     ndn::MakeNameAccessor(&PrefetcherApp::prefix_), ndn::MakeNameChecker())
       .AddAttribute("NodeID", "NodeID for prefetcher", UintegerValue(0),
-                    MakeUintegerAccessor(&PrefetcherApp::nid_), MakeUintegerChecker<uint64_t>());
+                    MakeUintegerAccessor(&PrefetcherApp::nid_), MakeUintegerChecker<uint64_t>())
+      .AddAttribute("MultiHop", "V2V MultiHop Communication", BooleanValue(false),
+                    MakeBooleanAccessor(&PrefetcherApp::multiHop), MakeBooleanChecker());
 
     return tid;
   }
+
+Address
+GetCurrentAP() {
+  Ptr<WifiNetDevice> wifiDev = GetNode()->GetDevice(0)->GetObject<WifiNetDevice>();
+  assert(wifiDev != nullptr);
+  Ptr<StaWifiMac> staMac = wifiDev->GetMac()->GetObject<StaWifiMac>();
+  assert(staMac != nullptr);
+  Address ap = staMac->GetBssid();
+  //std::cout << "App " << m_appId << " on Node " << GetNode()->GetId() << " connected to " << dest << std::endl;
+  return ap;
+}
 
 protected:
   // inherited from Application base class.
   virtual void
   StartApplication()
   {
-    m_instance.reset(new ::ndn::PrefetcherNode(prefix_, nid_));
+    m_instance.reset(new ::ndn::PrefetcherNode(prefix_, nid_, multiHop, std::bind(&PrefetcherApp::GetCurrentAP, this)));
     m_instance->Start();
   }
 
@@ -45,6 +59,7 @@ private:
   std::unique_ptr<::ndn::PrefetcherNode> m_instance;
   ndn::Name prefix_;
   uint64_t nid_;
+  bool multiHop;
 };
 
 }

@@ -101,6 +101,16 @@ public:
            int32_t metric);
 
   /**
+   * @brief Add forwarding entry to FIB (add all of the net devices)
+   *
+   * \param nodeName Node name (refer to ns3::Names)
+   * \param prefix Routing prefix
+   * \param metric Routing metric
+   */
+  static void
+  AddRoute(Ptr<Node> node, const Name& prefix, int32_t metric);
+
+  /**
    * \brief remove forwarding entry in FIB
    *
    * \param node Node

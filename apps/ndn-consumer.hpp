@@ -20,8 +20,6 @@
 #ifndef NDN_CONSUMER_H
 #define NDN_CONSUMER_H
 
-#include "ns3/ndnSIM/model/ndn-common.hpp"
-
 #include "ndn-app.hpp"
 
 #include "ns3/random-variable-stream.h"
