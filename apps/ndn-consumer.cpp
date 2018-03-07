@@ -320,11 +320,11 @@ Consumer::OnData(shared_ptr<const Data> data)
   uint32_t seq = data->getName().at(-1).toSequenceNumber();
 
   // if the data is for pre-fetch interest, drop it!
-  if (pre_fetch.find(seq) != pre_fetch.end()) {
-    pre_fetch.erase(seq);
-    NS_LOG_INFO("< Pre-Fetch DATA for: " << seq << ", DROP!");
-    return;
-  }
+  // if (pre_fetch.find(seq) != pre_fetch.end()) {
+  //   pre_fetch.erase(seq);
+  //   NS_LOG_INFO("< Pre-Fetch DATA for: " << seq << ", DROP!");
+  //   return;
+  // }
   NS_LOG_INFO("< DATA for " << seq);
 
   int hopCount = 0;
