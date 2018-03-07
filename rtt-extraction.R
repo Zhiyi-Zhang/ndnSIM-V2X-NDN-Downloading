@@ -69,8 +69,8 @@ for (i in 1:length(dataData)) {
 }
 
 # show plot
-plot(df$rtt[1:100], xlab="Data ID", ylab="Round-Trip Time")
-plot(df$hopcount[1:100], xlab="Data ID", ylab="Hop Number")
+plot(df$rtt[1:300], xlab="Data ID", ylab="Round-Trip Time")
+plot(df$hopcount[1:300], xlab="Data ID", ylab="Hop Number")
 rttsum <- summary(df$rtt[1:100])
 
 # time interval function

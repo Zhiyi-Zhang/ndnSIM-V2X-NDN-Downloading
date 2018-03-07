@@ -67,6 +67,7 @@ namespace ns3 {
  * With LOGGING: e.g.
  *
  *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step01 2>&1 | tee log.txt
+ *     NS_LOG=YansWifiPhy=level_all|prefix_func|prefix_time ./waf --run=step01 2>&1 | tee log.txt
  */
 
 int main (int argc, char *argv[])
@@ -76,8 +77,8 @@ int main (int argc, char *argv[])
 
   int bottomrow = 6;            // number of AP nodes
   int spacing = 200;            // between bottom-row nodes
-  int range = 90;
-  double endtime = 20.0;
+  int range = 90;               // AP ranges
+  double endtime = 40.0;
   double speed = (double)(bottomrow*spacing)/endtime; //setting speed to span full sim time
 
   string animFile = "ap-mobility-animation.xml";
@@ -115,8 +116,8 @@ int main (int argc, char *argv[])
   ////// The below set of helpers will help us to put together the wifi NICs we want
   WifiHelper wifi;
 
-  wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
-  YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
+  wifi.SetStandard(WIFI_PHY_STANDARD_80211b);
+  YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default();
 
   ////// This is one parameter that matters when using FixedRssLossModel
   ////// set it to zero; otherwise, gain will be added
@@ -135,10 +136,12 @@ int main (int argc, char *argv[])
   // wifiChannel.AddPropagationLoss ("ns3::FixedRssLossModel","Rss",DoubleValue(rss));
 
   ////// the following has an absolute cutoff at distance > range (range == radius)
-  wifiChannel.AddPropagationLoss ("ns3::RangePropagationLossModel",
+  wifiChannel.AddPropagationLoss("ns3::RangePropagationLossModel",
                                   "MaxRange", DoubleValue(range));
-  wifiPhy.SetChannel (wifiChannel.Create ());
-  wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
+
+
+  wifiPhy.SetChannel(wifiChannel.Create ());
+  wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
                                 "DataMode", StringValue (phyMode),
                                 "ControlMode", StringValue (phyMode));
 

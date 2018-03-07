@@ -1,7 +1,7 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
  * Authors:  Zhiyi Zhang: UCLA
- *           Your name: your affiliation
+ *           Xin Xu: UCLA
  *
  **/
 
@@ -9,6 +9,16 @@
 #include <iostream>
 
 namespace ns3 {
+
+const std::vector<int64_t> handoff_tp = {3166666666*2/*3.166s*2, 190m, AP1*/,
+                                         6500000000*2/*6.5s*2, 390m, AP2*/,
+                                         9833333333*2/*9.833s*2, 590m, AP3*/,
+                                         13166666666*2/*9.833s*2, 790m, AP4*/,
+                                         16500000000*2/*16.5s*2, 990m, AP5*/,
+                                         19833333333*2/*19.833s*2, 1190m, AP6*/};
+
+// the time interval between two APs when there is no wifi connection
+const int64_t wifilessInterval = 333333333*2; /*0.333s*2*/
 
 /**
  * @brief Use line regression to capture the trend of RTT change, thus knowing whether a station
@@ -18,9 +28,11 @@ namespace ns3 {
  * @return The seq(s) of packet to be sent
  */
 std::vector<uint32_t>
-moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo)
+moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo, int& apCounter)
 {
-  if (trafficInfo.real_rtt.size() < 2) return std::vector<uint32_t>(0);
+  if (trafficInfo.real_rtt.size() < 2)
+    return std::vector<uint32_t>(0);
+
   // ordinary least squares of line regression
   double sumX = 0;
   double sumY = 0;
@@ -44,13 +56,35 @@ moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo traffi
   double rate = sumXY - rttVec.size() * aveX * aveY;
   rate = rate / (sumXX - rttVec.size() * aveX * aveX);
 
-  // if the station is getting far from Access Point/Base Station
-  // pre-send an Interest with seq = seqJustSent + 5
-  std::vector<uint32_t> result;
-  if (rate > 0) {
-    result.push_back(seqJustSent + 5);
+  // new algorithm under new assumption
+  uint64_t currentTp = ns3::Simulator::Now().GetNanoSeconds();
+  double threshold = aveY;
+  for (int i = 0; i < handoff_tp.size(); i++) {
+    if (handoff_tp[i] > currentTp && handoff_tp[i] - currentTp <= threshold) {
+      if (apCounter >= i + 1) {
+        // already prefetch for this AP
+        break;
+      }
+
+      std::vector<uint32_t> result;
+      int insideNumber = static_cast<int>(threshold / 100000000);
+      int outsideNumber = static_cast<int>(wifilessInterval / 100000000);
+      for (int j = 0; j < outsideNumber + 1; j++) {
+        result.push_back(seqJustSent + insideNumber + j);
+      }
+      apCounter++;
+      return result;
+    }
   }
-  return result;
+  return std::vector<uint32_t>(0);
+
+  // // if the station is getting far from Access Point/Base Station
+  // // pre-send an Interest with seq = seqJustSent + 5
+  // std::vector<uint32_t> result;
+  // if (rate > 0) {
+  //   result.push_back(seqJustSent + 5);
+  // }
+  // return result;
 }
 
 std::vector<uint32_t>

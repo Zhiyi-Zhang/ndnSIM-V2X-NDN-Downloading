@@ -106,6 +106,7 @@ Consumer::Consumer()
   NS_LOG_FUNCTION_NOARGS();
 
   m_rtt = CreateObject<RttMeanDeviation>();
+  apCounter = 0;
 }
 
 void
@@ -232,8 +233,9 @@ Consumer::SendPacket()
       rtt_str += "]";
       NS_LOG_INFO ("Current Real RTT: " << rtt_str );
 
-      std::vector<uint32_t> pre_fetch_seq = ns3::moreInterestsToSend(seq, traffic_info);
+      std::vector<uint32_t> pre_fetch_seq = ns3::moreInterestsToSend(seq, traffic_info, this->apCounter);
       for (auto seq: pre_fetch_seq) {
+        NS_LOG_INFO ("Current apCounter: " << apCounter);
         pre_fetch.insert(seq);
         shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
         nameWithSequence->appendSequenceNumber(seq);

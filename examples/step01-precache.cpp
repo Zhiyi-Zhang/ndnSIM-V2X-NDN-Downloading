@@ -110,8 +110,8 @@ int main (int argc, char *argv[])
 
   int bottomrow = 6;            // number of AP nodes
   int spacing = 200;            // between bottom-row nodes
-  int range = 90;
-  double endtime = 20.0;
+  int range = 90;               // AP ranges
+  double endtime = 40.0;
   double speed = (double)(bottomrow*spacing)/endtime; //setting speed to span full sim time
 
   string animFile = "ap-mobility-animation.xml";
