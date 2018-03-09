@@ -1,7 +1,7 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
  * Authors:  Zhiyi Zhang: UCLA
- *           Your name: your affiliation
+ *           Xin Xu: UCLA
  *
  **/
 
@@ -14,7 +14,7 @@
 namespace ns3 {
 
 std::vector<uint32_t>
-moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo);
+moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo, int& apCounter);
 
 std::vector<uint32_t>
 oneHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo);

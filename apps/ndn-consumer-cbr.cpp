@@ -29,6 +29,9 @@
 #include "ns3/integer.h"
 #include "ns3/double.h"
 
+#include "ns3/wifi-net-device.h"
+#include "ns3/sta-wifi-mac.h"
+
 NS_LOG_COMPONENT_DEFINE("ndn.ConsumerCbr");
 
 namespace ns3 {
@@ -132,6 +135,20 @@ std::string
 ConsumerCbr::GetRandomize() const
 {
   return m_randomType;
+}
+
+void
+ConsumerCbr::ConnectedToNewAp(int deviceId)
+{
+  Ptr<ns3::WifiNetDevice> wifiDev = GetNode()->GetDevice(deviceId)->GetObject<ns3::WifiNetDevice>();
+  if (wifiDev != nullptr) {
+    Ptr<ns3::StaWifiMac> staMac = wifiDev->GetMac()->GetObject<ns3::StaWifiMac>();
+    if (staMac != nullptr) {
+      // Address dest = staMac->GetBssid();
+      Ssid ssid = staMac->GetSsid();
+      NS_LOG_INFO("App " << m_appId << " on Node " << GetNode()->GetId() << " connected to " << ssid);
+    }
+  }
 }
 
 } // namespace ndn

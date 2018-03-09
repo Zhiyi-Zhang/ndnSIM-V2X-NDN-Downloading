@@ -106,7 +106,7 @@ Consumer::Consumer()
   NS_LOG_FUNCTION_NOARGS();
 
   m_rtt = CreateObject<RttMeanDeviation>();
-
+  apCounter = 0;
 }
 
 Address
@@ -227,7 +227,7 @@ Consumer::SendPacket()
   time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
   interest->setInterestLifetime(interestLifeTime);
 
-  NS_LOG_INFO("> Interest for " << seq << " name = " << nameWithSequence->toUri() );
+  NS_LOG_INFO("> Interest for " << seq);
 
   WillSendOutInterest(seq);
 
@@ -245,8 +245,9 @@ Consumer::SendPacket()
       rtt_str += "]";
       NS_LOG_INFO ("Current Real RTT: " << rtt_str );
 
-      std::vector<uint32_t> pre_fetch_seq = ns3::moreInterestsToSend(seq, traffic_info);
+      std::vector<uint32_t> pre_fetch_seq = ns3::moreInterestsToSend(seq, traffic_info, this->apCounter);
       for (auto seq: pre_fetch_seq) {
+        NS_LOG_INFO ("Current apCounter: " << apCounter);
         pre_fetch.insert(seq);
         shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
         nameWithSequence->appendSequenceNumber(seq);
@@ -282,8 +283,7 @@ Consumer::SendPacket()
         time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
         interest->setInterestLifetime(interestLifeTime);
 
-        NS_LOG_INFO( "> Pre-Fetch Interest by One-hop V2V Communication for: " << seq );
-        NS_LOG_INFO( "> Pre-Fetch Interest name = " << nameWithSequence->toUri() );
+        NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication for: " << seq);
 
         m_transmittedInterests(interest, this, m_face);
         m_appLink->onReceiveInterest(*interest);
@@ -337,11 +337,11 @@ Consumer::OnData(shared_ptr<const Data> data)
   uint32_t seq = data->getName().at(-1).toSequenceNumber();
 
   // if the data is for pre-fetch interest, drop it!
-  if (pre_fetch.find(seq) != pre_fetch.end()) {
-    pre_fetch.erase(seq);
-    NS_LOG_INFO("< Pre-Fetch DATA for: " << seq << ", DROP!");
-    return;
-  }
+  // if (pre_fetch.find(seq) != pre_fetch.end()) {
+  //   pre_fetch.erase(seq);
+  //   NS_LOG_INFO("< Pre-Fetch DATA for: " << seq << ", DROP!");
+  //   return;
+  // }
   NS_LOG_INFO("< DATA for " << seq);
 
   int hopCount = 0;

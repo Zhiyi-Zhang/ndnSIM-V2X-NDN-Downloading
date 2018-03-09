@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 
+
 NS_LOG_COMPONENT_DEFINE ("step01");
 
 using namespace std;
@@ -34,22 +35,22 @@ namespace ns3 {
  *                                   | Producer |
  *                                   \----------/
  *                                         |
- *                                     Internet       10Mbps 100ms
+ *                                     Internet       100Mbps 60ms
  *                                         |
  *                                    /--------\
  *                           +------->|  root  |<--------+
- *                           |        \--------/         |    10Mbps 20ms
+ *                           |        \--------/         |    100Mbps 20ms
  *                           |                           |
  *                           v                           v
  *                      /-------\                    /-------\
  *              +------>| rtr-4 |<-------+   +------>| rtr-5 |<--------+
  *              |       \-------/        |   |       \-------/         |
- *              |                        |   |                         |   10Mbps 10ms
+ *              |                        |   |                         |   100Mbps 12ms
  *              v                        v   v                         v
  *         /-------\                   /-------\                    /-------\
  *      +->| rtr-1 |<-+             +->| rtr-2 |<-+              +->| rtr-3 |<-+
  *      |  \-------/  |             |  \-------/  |              |  \-------/  |
- *      |             |             |             |              |             | 10Mbps 2ms
+ *      |             |             |             |              |             | 100Mbps 10ms
  *      v             v             v             v              v             v
  *   /------\      /------\      /------\      /------\      /------\      /------\
  *   |wifi-1|      |wifi-2|      |wifi-3|      |wifi-4|      |wifi-5|      |wifi-6|
@@ -66,6 +67,7 @@ namespace ns3 {
  * With LOGGING: e.g.
  *
  *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step01 2>&1 | tee log.txt
+ *     NS_LOG=YansWifiPhy=level_all|prefix_func|prefix_time ./waf --run=step01 2>&1 | tee log.txt
  */
 
 int main (int argc, char *argv[])
@@ -114,8 +116,8 @@ int main (int argc, char *argv[])
   ////// The below set of helpers will help us to put together the wifi NICs we want
   WifiHelper wifi;
 
-  wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
-  YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
+  wifi.SetStandard(WIFI_PHY_STANDARD_80211b);
+  YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default();
 
   ////// This is one parameter that matters when using FixedRssLossModel
   ////// set it to zero; otherwise, gain will be added
@@ -134,10 +136,12 @@ int main (int argc, char *argv[])
   // wifiChannel.AddPropagationLoss ("ns3::FixedRssLossModel","Rss",DoubleValue(rss));
 
   ////// the following has an absolute cutoff at distance > range (range == radius)
-  wifiChannel.AddPropagationLoss ("ns3::RangePropagationLossModel",
+  wifiChannel.AddPropagationLoss("ns3::RangePropagationLossModel",
                                   "MaxRange", DoubleValue(range));
-  wifiPhy.SetChannel (wifiChannel.Create ());
-  wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
+
+
+  wifiPhy.SetChannel(wifiChannel.Create ());
+  wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
                                 "DataMode", StringValue (phyMode),
                                 "ControlMode", StringValue (phyMode));
 
@@ -214,24 +218,7 @@ int main (int argc, char *argv[])
   ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "1000");
   //ndnHelper.SetDefaultRoutes(true);
   //ndnHelper.SetOldContentStore("ns3::ndn::cs::Nocache");
-  // ndnHelper.InstallAll();
-  ndnHelper.Install(Names::Find<Node>("root"));
-  ndnHelper.Install(Names::Find<Node>("ap1"));
-  ndnHelper.Install(Names::Find<Node>("ap2"));
-  ndnHelper.Install(Names::Find<Node>("ap3"));
-  ndnHelper.Install(Names::Find<Node>("ap4"));
-  ndnHelper.Install(Names::Find<Node>("ap5"));
-  ndnHelper.Install(Names::Find<Node>("ap6"));
-  ndnHelper.Install(Names::Find<Node>("r1"));
-  ndnHelper.Install(Names::Find<Node>("r2"));
-  ndnHelper.Install(Names::Find<Node>("r3"));
-  ndnHelper.Install(Names::Find<Node>("r4"));
-  ndnHelper.Install(Names::Find<Node>("r5"));
-  ndnHelper.Install(Names::Find<Node>("r6"));
-
-  ndn::StackHelper ndnHelper1;
-  ndnHelper1.SetOldContentStore("ns3::ndn::cs::Nocache");
-  ndnHelper1.Install(consumers);
+  ndnHelper.InstallAll();
 
   // Choosing forwarding strategy
   ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/best-route");
@@ -248,7 +235,6 @@ int main (int argc, char *argv[])
   consumerHelper.SetPrefix("/youtube/video001");
   // consumerHelper.SetPrefix("/youtube/prefix");
   consumerHelper.SetAttribute("Frequency", DoubleValue(10.0));
-  consumerHelper.SetAttribute("Step1", BooleanValue(true));
   // consumerHelper.SetAttribute("RetxTimer", );
   consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));
   // consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.0));

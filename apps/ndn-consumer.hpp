@@ -116,6 +116,8 @@ public:
     std::deque<int64_t> retx_time;
   };
 
+  int apCounter;
+
 protected:
   // from App
   virtual void
