@@ -1,11 +1,8 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
  * Authors:  Zhiyi Zhang: UCLA
-<<<<<<< HEAD
  *           Your name: your affiliation
-=======
  *           Xin Xu: UCLA
->>>>>>> 13907f42d5a98983295b5029762d267c6481044c
  *
  **/
 
