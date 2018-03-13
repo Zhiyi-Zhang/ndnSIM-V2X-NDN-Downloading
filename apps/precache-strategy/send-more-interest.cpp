@@ -92,7 +92,7 @@ moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo traffi
 
   // after arriving
   for (int i = 0; i < entering_tp.size(); i++) {
-    if (currentTp > entering_tp[i] + 100000000 && currentTp - entering_tp[i] - 100000000 <= thresholdAfterEnteringAP) {
+    if (currentTp > entering_tp[i] + 200000000 && currentTp - entering_tp[i] - 200000000 <= thresholdAfterEnteringAP) {
       return std::make_tuple(std::vector<uint32_t>(0), true);
     }
   }

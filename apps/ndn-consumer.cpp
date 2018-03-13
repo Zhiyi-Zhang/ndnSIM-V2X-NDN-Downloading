@@ -280,10 +280,10 @@ Consumer::SendPacket()
     if (dumpRtxQueue) {
       NS_LOG_INFO("DumpRtxQueue is true");
       std::vector<uint32_t> seqToBeSend;
-      for (const auto& timeoutEntry : m_seqTimeouts) {
-        seq = timeoutEntry.seq;
-        seqToBeSend.push_back(seq);
-      }
+      // for (const auto& timeoutEntry : m_seqTimeouts) {
+      //   seq = timeoutEntry.seq;
+      //   seqToBeSend.push_back(seq);
+      // }
       for (int i = avoidSeqStart; i < avoidSeqEnd + 1; i++) {
         seqToBeSend.push_back(i);
       }
