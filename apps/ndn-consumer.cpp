@@ -256,6 +256,8 @@ Consumer::SendPacket()
     if (pre_fetch_seq.size() > 0) {
       avoidSeqStart = pre_fetch_seq.front() - 1;
       avoidSeqEnd = pre_fetch_seq.back();
+      NS_LOG_INFO ("SET AVOIDSEQ START: " << avoidSeqStart);
+      NS_LOG_INFO ("SET AVOIDSEQ END: " << avoidSeqEnd);
 
       for (auto seq: pre_fetch_seq) {
         NS_LOG_INFO ("Current apCounter: " << apCounter);
@@ -302,6 +304,8 @@ Consumer::SendPacket()
         m_transmittedInterests(interest, this, m_face);
         m_appLink->onReceiveInterest(*interest);
       }
+
+      avoidSeqStart = avoidSeqEnd = 0;
     }
   }
   if (m_step2 == true) {
