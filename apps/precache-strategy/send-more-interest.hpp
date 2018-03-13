@@ -2,6 +2,7 @@
 /**
  * Authors:  Zhiyi Zhang: UCLA
  *           Xin Xu: UCLA
+ *           Your name: your affiliation
  *
  **/
 
@@ -13,14 +14,14 @@
 
 namespace ns3 {
 
-std::vector<uint32_t>
+std::tuple<std::vector<uint32_t>, bool>
 moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo, int& apCounter);
 
-std::vector<uint32_t>
-oneHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo);
+std::tuple<std::vector<uint32_t>, bool>
+oneHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo, int& apCounter);
 
-std::vector<uint32_t>
-MultiHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo);
+// std::vector<uint32_t>
+// MultiHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo);
 
 }
 #endif // NDNSIM_EXAMPLES_PRECACHE_STRATEGY_SEND_MORE_INTEREST_HPP

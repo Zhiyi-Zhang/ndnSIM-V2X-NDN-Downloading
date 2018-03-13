@@ -256,6 +256,7 @@ int main (int argc, char *argv[])
   // Producer Helpers
   ndn::AppHelper producerHelper("ns3::ndn::Producer");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
+  producerHelper.SetAttribute("Freshness",  TimeValue(Seconds(0)));
   // Register /root prefix with global routing controller and
   // install producer that will satisfy Interests in /youtube namespace
   ndnGlobalRoutingHelper.AddOrigins("/youtube", producer);

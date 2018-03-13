@@ -19,11 +19,22 @@ for (i in 1:length(interestData)) {
 }
 
 # Extract Prefetch Interest Data
-PreFetchInterestPattern <- "^\\+([.0-9]*).* > Pre-Fetch Interest.*([0-9]*)$"
+PreFetchInterestPattern <- "^\\+([.0-9]*).* > Pre-Fetch Interest for ([0-9]*)$"
 PreFetchInterestData <- regmatches(rawData, gregexpr(PreFetchInterestPattern, rawData))
 PreFetchInterestData <-PreFetchInterestData[grep(PreFetchInterestPattern, PreFetchInterestData)]
-duplicatedInterestNumber <- length(PreFetchInterestData)
-duplicatedInterestRatio <- duplicatedInterestNumber/(length(interestData) + duplicatedInterestNumber)
+for (i in 1:length(PreFetchInterestData)) {
+  PreFetchInterestData[i] <- sub(PreFetchInterestPattern, "\\1 \\2", PreFetchInterestData[i])
+}
+# duplicatedInterestNumber <- length(PreFetchInterestData)
+# duplicatedInterestRatio <- duplicatedInterestNumber/(length(interestData) + duplicatedInterestNumber)
+
+# Extract Recovery Interest Data
+RecoveryInterestPattern <- "^\\+([.0-9]*).* > Recovery Interest for ([0-9]*)$"
+RecoveryInterestData <- regmatches(rawData, gregexpr(RecoveryInterestPattern, rawData))
+RecoveryInterestData <-RecoveryInterestData[grep(RecoveryInterestPattern, RecoveryInterestData)]
+for (i in 1:length(RecoveryInterestData)) {
+  RecoveryInterestData[i] <- sub(RecoveryInterestPattern, "\\1 \\2", RecoveryInterestData[i])
+}
 
 # Extract Dropped Data Data
 DroppedPreFetchDataPattern <- "^\\+([.0-9]*).*< Pre.Fetch DATA..([0-9]*)..DROP.$"

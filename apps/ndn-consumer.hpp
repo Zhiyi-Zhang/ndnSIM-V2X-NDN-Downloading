@@ -117,6 +117,8 @@ public:
   };
 
   int apCounter;
+  int avoidSeqStart;
+  int avoidSeqEnd;
 
 protected:
   // from App
