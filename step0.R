@@ -18,31 +18,6 @@ for (i in 1:length(interestData)) {
   interestData[i] <- sub(interestPattern, "\\1 \\2", interestData[i])
 }
 
-# Extract Prefetch Interest Data
-PreFetchInterestPattern <- "^\\+([.0-9]*).* > Pre-Fetch Interest for ([0-9]*)$"
-PreFetchInterestData <- regmatches(rawData, gregexpr(PreFetchInterestPattern, rawData))
-PreFetchInterestData <-PreFetchInterestData[grep(PreFetchInterestPattern, PreFetchInterestData)]
-for (i in 1:length(PreFetchInterestData)) {
-  PreFetchInterestData[i] <- sub(PreFetchInterestPattern, "\\1 \\2", PreFetchInterestData[i])
-}
-# duplicatedInterestNumber <- length(PreFetchInterestData)
-# duplicatedInterestRatio <- duplicatedInterestNumber/(length(interestData) + duplicatedInterestNumber)
-
-# Extract Recovery Interest Data
-RecoveryInterestPattern <- "^\\+([.0-9]*).* > Recovery Interest for ([0-9]*)$"
-RecoveryInterestData <- regmatches(rawData, gregexpr(RecoveryInterestPattern, rawData))
-RecoveryInterestData <-RecoveryInterestData[grep(RecoveryInterestPattern, RecoveryInterestData)]
-for (i in 1:length(RecoveryInterestData)) {
-  RecoveryInterestData[i] <- sub(RecoveryInterestPattern, "\\1 \\2", RecoveryInterestData[i])
-}
-
-# Extract Dropped Data Data
-DroppedPreFetchDataPattern <- "^\\+([.0-9]*).*< Pre.Fetch DATA..([0-9]*)..DROP.$"
-DroppedPreFetchDataData <- regmatches(rawData, gregexpr(DroppedPreFetchDataPattern, rawData))
-DroppedPreFetchDataData <-DroppedPreFetchDataData[grep(DroppedPreFetchDataPattern, DroppedPreFetchDataData)]
-DroppedPreFetchDataNumber <- length(DroppedPreFetchDataData)
-DroppedPreFetchDataRatio <- DroppedPreFetchDataNumber/(length(dataData) + DroppedPreFetchDataNumber)
-
 # Extract Hop Data
 hopcountPattern <- "^\\+([.0-9]*).*Hop count: ([0-9]*)$"
 hopData <- regmatches(rawData, gregexpr(hopcountPattern, rawData))
@@ -66,17 +41,6 @@ for (i in 1:length(dataData)) {
   recieveTime <- as.numeric(item[[1]][1])
   for (j in length(interestData):1) {
     item2 <- strsplit(as.character(interestData[j]), " ")
-    index2 <- as.numeric(item2[[1]][2])
-    sendTime <- as.numeric(item2[[1]][1])
-    if (index2 - index == 0) {
-      df$sending[i] <- sendTime
-      df$recieving[i] <- recieveTime
-      df$rtt[i] <- (recieveTime*1000000000 - sendTime*1000000000)# - 214296000
-      break
-    }
-  }
-  for (j in length(RecoveryInterestData):1) {
-    item2 <- strsplit(as.character(RecoveryInterestData[j]), " ")
     index2 <- as.numeric(item2[[1]][2])
     sendTime <- as.numeric(item2[[1]][1])
     if (index2 - index == 0) {
