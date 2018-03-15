@@ -56,22 +56,22 @@ namespace ns3 {
  *   \------/      \------/      \------/      \------/      \------/      \------/
  *
  *
- * |v1|-->
+ * |v1|-->      |v2|-->
  *
  *
  * To run scenario and see what is happening, use the following command:
  *
- *     ./waf --run=step01
+ *     ./waf --run=step2
  *
  * With LOGGING: e.g.
  *
- *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step01-precache 2>&1 | tee log2.txt
+ *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step2-vfetch 2>&1 | tee log2.txt
  */
 
 int main (int argc, char *argv[])
 {
   std::string phyMode ("DsssRate1Mbps");
-  uint32_t wifiSta = 1;
+  uint32_t wifiSta = 2;
 
   int bottomrow = 6;            // number of AP nodes
   int spacing = 200;            // between bottom-row nodes
@@ -197,7 +197,7 @@ int main (int argc, char *argv[])
   for (uint32_t i=0; i<wifiSta ; i++) {
     Ptr<ConstantVelocityMobilityModel> cvmm =
       consumers.Get(i)->GetObject<ConstantVelocityMobilityModel>();
-    Vector pos(0-nxt, 0, 0);
+    Vector pos(0+nxt, 0, 0);
     Vector vel(speed, 0, 0);
     cvmm->SetPosition(pos);
     cvmm->SetVelocity(vel);
@@ -248,7 +248,7 @@ int main (int argc, char *argv[])
   consumerHelper.SetPrefix("/youtube/video001");
   // consumerHelper.SetPrefix("/youtube/prefix");
   consumerHelper.SetAttribute("Frequency", DoubleValue(10.0));
-  consumerHelper.SetAttribute("Step1", BooleanValue(true));
+  consumerHelper.SetAttribute("Step2", BooleanValue(true));
   // consumerHelper.SetAttribute("RetxTimer", );
   consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));
   // consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.0));
@@ -256,7 +256,6 @@ int main (int argc, char *argv[])
   // Producer Helpers
   ndn::AppHelper producerHelper("ns3::ndn::Producer");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
-  producerHelper.SetAttribute("Freshness",  TimeValue(Seconds(0)));
   // Register /root prefix with global routing controller and
   // install producer that will satisfy Interests in /youtube namespace
   ndnGlobalRoutingHelper.AddOrigins("/youtube", producer);
@@ -265,6 +264,18 @@ int main (int argc, char *argv[])
 
   // Calculate and install FIBs
   ndn::GlobalRoutingHelper::CalculateRoutes();
+
+  // Prefetcher Helpers
+  for (int i = 1; i < wifiSta; ++i) {
+    ndn::AppHelper prefetcherHelper("PrefetcherApp");
+    prefetcherHelper.SetAttribute("NodeID", UintegerValue(i));
+    prefetcherHelper.SetAttribute("Prefix", StringValue("/youtube/video001"));
+    prefetcherHelper.SetAttribute("MultiHop", BooleanValue(false));
+    prefetcherHelper.Install(consumers.Get(i)).Start(Seconds(0.1));
+    ndn::FibHelper::AddRoute(consumers.Get(i), "/prefetch", std::numeric_limits<int32_t>::max());
+    ndn::FibHelper::AddRoute(consumers.Get(i), "/youtube/video001", std::numeric_limits<int32_t>::max());
+  }
+  ndn::FibHelper::AddRoute(consumers.Get(0), "/prefetch", std::numeric_limits<int32_t>::max());
 
   // Tracing
   wifiPhy.EnablePcap("step01", devices);

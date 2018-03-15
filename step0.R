@@ -1,5 +1,5 @@
 # Read Raw Data
-rawData <- readLines("../../log.txt")
+rawData <- readLines("../../log0.txt")
 options(scipen=999)
 
 # Extract Data Data
