@@ -57,7 +57,29 @@ for (i in 1:length(dataData)) {
 # show plot
 plot(df$rtt[1:350], xlab="Data ID", ylab="Round-Trip Time")
 plot(df$hopcount[1:350], xlab="Data ID", ylab="Hop Number")
-rttsum <- summary(df$rtt[1:100])
+rttsum <- summary(df$rtt[1:350])
+
+# packets received per sencod
+df2 <- data.frame(second = numeric(50),
+                  packetNum = numeric(50),
+                  stringsAsFactors = FALSE)
+for (i in 1:50) {
+  df2$second[i] <- i
+  counter <- 0
+  for (j in 1:length(dataData)) {
+    item <- strsplit(as.character(dataData[j]), " ")
+    recieveTime <- as.numeric(item[[1]][1])
+    if (recieveTime <= i && recieveTime > i - 1) {
+      counter <- counter + 1
+    }
+    if (recieveTime > i) {
+      break
+    }
+  }
+  df2$packetNum[i] <- counter
+}
+plot(df2$packetNum[1:50], xlab="Time", ylab="Downloading Rate", type="o", col="blue")
+
 
 # time interval function
 starttp <- 2.7
