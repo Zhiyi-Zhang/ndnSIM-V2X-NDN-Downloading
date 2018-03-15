@@ -150,8 +150,8 @@ oneHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficI
       std::vector<uint32_t> result;
       int insideNumber = static_cast<int>(threshold / 100000000);
       int outsideNumber = static_cast<int>(wifilessInterval / 100000000);
-      for (int j = 0; j < outsideNumber + 1; j++) {
-        result.push_back(seqJustSent + insideNumber + j);
+      for (int j = 0; j < insideNumber + outsideNumber + 1; j++) {
+        result.push_back(seqJustSent + j);
       }
       apCounter++;
       return std::make_tuple(result, false);

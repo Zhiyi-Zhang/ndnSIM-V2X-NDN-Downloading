@@ -259,11 +259,11 @@ Consumer::SendPacket()
       NS_LOG_INFO ("SET AVOIDSEQ START: " << avoidSeqStart);
       NS_LOG_INFO ("SET AVOIDSEQ END: " << avoidSeqEnd);
 
-      for (auto seq: pre_fetch_seq) {
+      for (auto pre_seq: pre_fetch_seq) {
         NS_LOG_INFO ("Current apCounter: " << apCounter);
-        pre_fetch.insert(seq);
+        pre_fetch.insert(pre_seq);
         shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
-        nameWithSequence->appendSequenceNumber(seq);
+        nameWithSequence->appendSequenceNumber(pre_seq);
 
         shared_ptr<Interest> interest = make_shared<Interest>();
         interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
@@ -271,7 +271,7 @@ Consumer::SendPacket()
         time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
         interest->setInterestLifetime(interestLifeTime);
 
-        NS_LOG_INFO("> Pre-Fetch Interest for " << seq);
+        NS_LOG_INFO("> Pre-Fetch Interest for " << pre_seq);
 
         m_transmittedInterests(interest, this, m_face);
         m_appLink->onReceiveInterest(*interest);
@@ -312,29 +312,45 @@ Consumer::SendPacket()
   if (m_step2 == true) {
     // prefetch by one-hop V2V communiaction
     // v2v prefetch interest: /pretch/bssid/prefix/seq
+    // log the current real rtt vector
+    std::string rtt_str = "[";
+    for (auto entry: traffic_info.real_rtt) {
+      rtt_str += std::to_string(entry) + ",";
+    }
+    rtt_str += "]";
+    NS_LOG_INFO ("Current Real RTT: " << rtt_str );
+
     std::vector<uint32_t> pre_fetch_seq;
     bool dumpRtxQueue = false;
     std::tie(pre_fetch_seq, dumpRtxQueue) = ns3::oneHopV2VPrefetch(m_seq, traffic_info, this->apCounter);
-    for (auto seq: pre_fetch_seq) {
-      shared_ptr<Name> nameWithSequence = make_shared<Name>(Name("/prefetch"));
-      nameWithSequence->append(m_interestName);
-      nameWithSequence->appendSequenceNumber(seq);
-      Address ap = GetCurrentAP();
-      std::ostringstream os;
-      os << ap;
-      nameWithSequence->append(os.str().c_str());
+    if (pre_fetch_seq.size() > 0) {
+      avoidSeqStart = pre_fetch_seq.front() - 1;
+      avoidSeqEnd = pre_fetch_seq.back();
+      NS_LOG_INFO ("SET AVOIDSEQ START: " << avoidSeqStart);
+      NS_LOG_INFO ("SET AVOIDSEQ END: " << avoidSeqEnd);
 
-      shared_ptr<Interest> interest = make_shared<Interest>();
-      interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
-      interest->setName(*nameWithSequence);
-      time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
-      interest->setInterestLifetime(interestLifeTime);
+      for (auto pre_seq: pre_fetch_seq) {
+        shared_ptr<Name> nameWithSequence = make_shared<Name>(Name("/prefetch"));
+        nameWithSequence->append(m_interestName);
+        nameWithSequence->appendSequenceNumber(pre_seq);
+        Address ap = GetCurrentAP();
+        std::ostringstream os;
+        os << ap;
+        nameWithSequence->append(os.str().c_str());
 
-      NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication for: " << seq);
+        shared_ptr<Interest> interest = make_shared<Interest>();
+        interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
+        interest->setName(*nameWithSequence);
+        time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
+        interest->setInterestLifetime(interestLifeTime);
 
-      m_transmittedInterests(interest, this, m_face);
-      m_appLink->onReceiveInterest(*interest);
+        NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication for " << pre_seq << " , Name: " << interest->getName().toUri() );
+
+        m_transmittedInterests(interest, this, m_face);
+        m_appLink->onReceiveInterest(*interest);
+      }
     }
+
     if (dumpRtxQueue) {
       NS_LOG_INFO("DumpRtxQueue is true");
       std::vector<uint32_t> seqToBeSend;

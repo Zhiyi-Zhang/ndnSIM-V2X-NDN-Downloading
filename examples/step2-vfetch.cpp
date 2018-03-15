@@ -197,11 +197,11 @@ int main (int argc, char *argv[])
   for (uint32_t i=0; i<wifiSta ; i++) {
     Ptr<ConstantVelocityMobilityModel> cvmm =
       consumers.Get(i)->GetObject<ConstantVelocityMobilityModel>();
-    Vector pos(0+nxt, 0, 0);
+    Vector pos(nxt, 0, 0);
     Vector vel(speed, 0, 0);
     cvmm->SetPosition(pos);
     cvmm->SetVelocity(vel);
-    nxt += 100;
+    nxt += 50;
   }
 
   // std::cout << "position: " << cvmm->GetPosition() << " velocity: " << cvmm->GetVelocity() << std::endl;
