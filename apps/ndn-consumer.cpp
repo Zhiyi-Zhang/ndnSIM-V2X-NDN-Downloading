@@ -307,6 +307,7 @@ Consumer::SendPacket()
 
       avoidSeqStart = avoidSeqEnd = 0;
     }
+
   }
   if (m_step2 == true) {
     // prefetch by one-hop V2V communiaction
@@ -333,6 +334,36 @@ Consumer::SendPacket()
 
       m_transmittedInterests(interest, this, m_face);
       m_appLink->onReceiveInterest(*interest);
+    }
+    if (dumpRtxQueue) {
+      NS_LOG_INFO("DumpRtxQueue is true");
+      std::vector<uint32_t> seqToBeSend;
+      // for (const auto& timeoutEntry : m_seqTimeouts) {
+      //   seq = timeoutEntry.seq;
+      //   seqToBeSend.push_back(seq);
+      // }
+      for (int i = avoidSeqStart; i < avoidSeqEnd + 1; i++) {
+        seqToBeSend.push_back(i);
+      }
+      for (const auto& seqNumber : seqToBeSend) {
+        shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
+        nameWithSequence->appendSequenceNumber(seqNumber);
+
+        shared_ptr<Interest> interest = make_shared<Interest>();
+        interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
+        interest->setName(*nameWithSequence);
+        time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
+        interest->setInterestLifetime(interestLifeTime);
+
+        NS_LOG_INFO("> Recovery Interest for " << seqNumber);
+
+        WillSendOutInterest(seqNumber);
+
+        m_transmittedInterests(interest, this, m_face);
+        m_appLink->onReceiveInterest(*interest);
+      }
+
+      avoidSeqStart = avoidSeqEnd = 0;
     }
   }
 
