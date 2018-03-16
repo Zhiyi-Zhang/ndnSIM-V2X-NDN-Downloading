@@ -95,6 +95,10 @@ plot(df$rtt[1:350], xlab="Data ID", ylab="Round-Trip Time")
 plot(df$hopcount[1:350], xlab="Data ID", ylab="Hop Number")
 rttsum <- summary(df$rtt[1:100])
 
+# packets received per sencod
+df2 <- data.frame(second = numeric(50),
+                  packetNum = numeric(50),
+                  stringsAsFactors = FALSE)
 for (i in 1:50) {
   df2$second[i] <- i
   counter <- 0
