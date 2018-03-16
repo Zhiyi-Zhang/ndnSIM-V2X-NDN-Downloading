@@ -8,3 +8,4 @@ docs/introspected-doxygen.hpp
 docs/ndnSIM.tag
 .R*
 *.pdf
+log*.txt

@@ -263,7 +263,7 @@ Consumer::SendPacket()
         NS_LOG_INFO ("Current apCounter: " << apCounter);
         pre_fetch.insert(pre_seq);
         shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
-        nameWithSequence->appendSequenceNumber(pre_seq);
+        nameWithSequence->appendNumber(pre_seq);
 
         shared_ptr<Interest> interest = make_shared<Interest>();
         interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
@@ -332,7 +332,7 @@ Consumer::SendPacket()
       for (auto pre_seq: pre_fetch_seq) {
         shared_ptr<Name> nameWithSequence = make_shared<Name>(Name("/prefetch"));
         nameWithSequence->append(m_interestName);
-        nameWithSequence->appendSequenceNumber(pre_seq);
+        nameWithSequence->appendNumber(pre_seq);
         Address ap = GetCurrentAP();
         std::ostringstream os;
         os << ap;
@@ -348,6 +348,8 @@ Consumer::SendPacket()
 
         m_transmittedInterests(interest, this, m_face);
         m_appLink->onReceiveInterest(*interest);
+        // for debugging
+        // Simulator::Schedule(MicroSeconds(500), &Consumer::sendPrefetchInterest, this, interest);
       }
     }
 
@@ -388,6 +390,14 @@ Consumer::SendPacket()
   ///////////////////////////////////////////
 
   ScheduleNextPacket();
+}
+
+void
+Consumer::sendPrefetchInterest(shared_ptr<Interest> interest) {
+  NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication, Name: " << interest->getName().toUri() );
+
+  m_transmittedInterests(interest, this, m_face);
+  m_appLink->onReceiveInterest(*interest);
 }
 
 ///////////////////////////////////////////////////

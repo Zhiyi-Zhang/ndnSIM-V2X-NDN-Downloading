@@ -82,7 +82,7 @@ moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo traffi
       std::vector<uint32_t> result;
       int insideNumber = static_cast<int>(threshold / 100000000);
       int outsideNumber = static_cast<int>(wifilessInterval / 100000000);
-      for (int j = 0; j < insideNumber + outsideNumber; j++) {
+      for (int j = 0; j < insideNumber + outsideNumber + 1; j++) {
         result.push_back(seqJustSent + j);
       }
       apCounter++;

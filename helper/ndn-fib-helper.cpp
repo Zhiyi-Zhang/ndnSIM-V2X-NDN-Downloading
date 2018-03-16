@@ -192,6 +192,22 @@ FibHelper::AddRoute(Ptr<Node> node, const Name& prefix, int32_t metric)
   }
 }
 
+// Add a specific net-device to a prefix
+void
+FibHelper::AddRouteForDevice(Ptr<Node> node, const Name& prefix, int32_t metric, uint32_t deviceId)
+{
+  Ptr<NetDevice> device = node->GetDevice(deviceId);
+  Ptr<L3Protocol> ndn = node->GetObject<L3Protocol>();
+  NS_ASSERT_MSG(ndn != 0, "Ndn stack should be installed on the node");
+
+  shared_ptr<Face> face = ndn->getFaceByNetDevice(device);
+  NS_ASSERT_MSG(face != 0, "There is no face associated with the net-device");
+
+  std::cout << "*****************Add face id = " << face->getId() << " to " << prefix << std::endl;
+  std::cout << "*****************face info: " << *face << std::endl;
+  AddRoute(node, prefix, face, metric);
+}
+
 void
 FibHelper::RemoveRoute(Ptr<Node> node, const Name& prefix, shared_ptr<Face> face)
 {

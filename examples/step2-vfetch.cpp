@@ -106,6 +106,9 @@ int main (int argc, char *argv[])
                           Names::Find<Node>("r5"),
                           Names::Find<Node>("r6"),};
 
+  NodeContainer consumers;
+  consumers.Create(wifiSta);
+
   ////// disable fragmentation, RTS/CTS for frames below 2200 bytes and fix non-unicast data rate
   Config::SetDefault("ns3::WifiRemoteStationManager::FragmentationThreshold", StringValue("2200"));
   Config::SetDefault("ns3::WifiRemoteStationManager::RtsCtsThreshold", StringValue("2200"));
@@ -115,25 +118,11 @@ int main (int argc, char *argv[])
   WifiHelper wifi;
 
   wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
+
   YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
-
-  ////// This is one parameter that matters when using FixedRssLossModel
-  ////// set it to zero; otherwise, gain will be added
-  // wifiPhy.Set ("RxGain", DoubleValue (0) );
-
-  ////// ns-3 supports RadioTap and Prism tracing extensions for 802.11b
   wifiPhy.SetPcapDataLinkType (YansWifiPhyHelper::DLT_IEEE802_11_RADIO);
-
   YansWifiChannelHelper wifiChannel;
-
   wifiChannel.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
-  // wifiChannel.AddPropagationLoss("ns3::NakagamiPropagationLossModel");
-
-  ////// The below FixedRssLossModel will cause the rss to be fixed regardless
-  ////// of the distance between the two stations, and the transmit power
-  // wifiChannel.AddPropagationLoss ("ns3::FixedRssLossModel","Rss",DoubleValue(rss));
-
-  ////// the following has an absolute cutoff at distance > range (range == radius)
   wifiChannel.AddPropagationLoss ("ns3::RangePropagationLossModel",
                                   "MaxRange", DoubleValue(range));
   wifiPhy.SetChannel (wifiChannel.Create ());
@@ -141,22 +130,15 @@ int main (int argc, char *argv[])
                                 "DataMode", StringValue (phyMode),
                                 "ControlMode", StringValue (phyMode));
 
-  ////// Setup the rest of the upper mac
   ////// Setting SSID, optional. Modified net-device to get Bssid, mandatory for AP unicast
   Ssid ssid = Ssid ("wifi-default");
-  // wifi.SetRemoteStationManager ("ns3::ArfWifiManager");
 
   ////// Add a non-QoS upper mac of STAs, and disable rate control
-  NqosWifiMacHelper wifiMacHelper = NqosWifiMacHelper::Default();
   ////// Active associsation of STA to AP via probing.
+  NqosWifiMacHelper wifiMacHelper = NqosWifiMacHelper::Default();
   wifiMacHelper.SetType("ns3::StaWifiMac", "Ssid", SsidValue(ssid),
                         "ActiveProbing", BooleanValue(true),
                         "ProbeRequestTimeout", TimeValue(Seconds(0.25)));
-
-  ////// Creating 1 mobile nodes
-  NodeContainer consumers;
-  consumers.Create(wifiSta);
-
   NetDeviceContainer staDevice = wifi.Install(wifiPhy, wifiMacHelper, consumers);
   NetDeviceContainer devices = staDevice;
 
@@ -169,8 +151,21 @@ int main (int argc, char *argv[])
     devices.Add(apDevice);
   }
 
-  ////// Note that with FixedRssLossModel, the positions below are not
-  ////// used for received signal strength.
+  ////// Add AdHoc Mac for Consumers
+  WifiHelper wifi2 = WifiHelper::Default ();
+  // wifi.SetRemoteStationManager ("ns3::AarfWifiManager");
+  wifi2.SetStandard (WIFI_PHY_STANDARD_80211a);
+  wifi2.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
+                                "DataMode", StringValue ("OfdmRate24Mbps"));
+  YansWifiChannelHelper wifiChannel2;// = YansWifiChannelHelper::Default ();
+  wifiChannel2.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
+  wifiChannel2.AddPropagationLoss ("ns3::RangePropagationLossModel",
+                                  "MaxRange", DoubleValue(range));
+  YansWifiPhyHelper wifiPhy2 = YansWifiPhyHelper::Default ();
+  wifiPhy2.SetChannel (wifiChannel.Create ());
+  NqosWifiMacHelper wifiMac2 = NqosWifiMacHelper::Default ();
+  wifiMac2.SetType("ns3::AdhocWifiMac");
+  wifi.Install(wifiPhy2, wifiMac2, consumers);
 
   ////// set positions for APs
   MobilityHelper sessile;
@@ -234,7 +229,7 @@ int main (int argc, char *argv[])
   ndnHelper1.Install(consumers);
 
   // Choosing forwarding strategy
-  ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/best-route");
+  ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/multicast");
   //ndn::StrategyChoiceHelper::InstallAll("/", "/localhost/nfd/strategy/best-route");
 
   // Installing global routing interface on all nodes
@@ -243,16 +238,6 @@ int main (int argc, char *argv[])
 
   // 4. Set up applications
   NS_LOG_INFO("Installing Applications");
-  // Consumer Helpers
-  ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
-  consumerHelper.SetPrefix("/youtube/video001");
-  // consumerHelper.SetPrefix("/youtube/prefix");
-  consumerHelper.SetAttribute("Frequency", DoubleValue(10.0));
-  consumerHelper.SetAttribute("Step2", BooleanValue(true));
-  // consumerHelper.SetAttribute("RetxTimer", );
-  consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));
-  // consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.0));
-
   // Producer Helpers
   ndn::AppHelper producerHelper("ns3::ndn::Producer");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
@@ -265,6 +250,16 @@ int main (int argc, char *argv[])
   // Calculate and install FIBs
   ndn::GlobalRoutingHelper::CalculateRoutes();
 
+  // Consumer Helpers
+  ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
+  consumerHelper.SetPrefix("/youtube/video001");
+  // consumerHelper.SetPrefix("/youtube/prefix");
+  consumerHelper.SetAttribute("Frequency", DoubleValue(10.0));
+  consumerHelper.SetAttribute("Step2", BooleanValue(true));
+  // consumerHelper.SetAttribute("RetxTimer", );
+  consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));
+  // consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.0));
+
   // Prefetcher Helpers
   for (int i = 1; i < wifiSta; ++i) {
     ndn::AppHelper prefetcherHelper("PrefetcherApp");
@@ -272,10 +267,12 @@ int main (int argc, char *argv[])
     prefetcherHelper.SetAttribute("Prefix", StringValue("/youtube/video001"));
     prefetcherHelper.SetAttribute("MultiHop", BooleanValue(false));
     prefetcherHelper.Install(consumers.Get(i)).Start(Seconds(0.1));
-    ndn::FibHelper::AddRoute(consumers.Get(i), "/prefetch", std::numeric_limits<int32_t>::max());
-    ndn::FibHelper::AddRoute(consumers.Get(i), "/youtube/video001", std::numeric_limits<int32_t>::max());
   }
-  ndn::FibHelper::AddRoute(consumers.Get(0), "/prefetch", std::numeric_limits<int32_t>::max());
+
+  for (auto consumer: consumers) {
+    ndn::FibHelper::AddRouteForDevice(consumer, "/youtube/video001", std::numeric_limits<int32_t>::max(), 0);
+    ndn::FibHelper::AddRouteForDevice(consumer, "/prefetch", std::numeric_limits<int32_t>::max(), 1);
+  }
 
   // Tracing
   wifiPhy.EnablePcap("step01", devices);

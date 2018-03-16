@@ -110,6 +110,9 @@ public:
   static void
   AddRoute(Ptr<Node> node, const Name& prefix, int32_t metric);
 
+  static void
+  AddRouteForDevice(Ptr<Node> node, const Name& prefix, int32_t metric, uint32_t deviceId);
+
   /**
    * \brief remove forwarding entry in FIB
    *

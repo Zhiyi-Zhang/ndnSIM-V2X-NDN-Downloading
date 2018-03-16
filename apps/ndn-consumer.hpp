@@ -155,6 +155,9 @@ protected:
   Time
   GetRetxTimer() const;
 
+  void
+  sendPrefetchInterest(shared_ptr<Interest> interest);
+
 protected:
   Ptr<UniformRandomVariable> m_rand; ///< @brief nonce generator
 
