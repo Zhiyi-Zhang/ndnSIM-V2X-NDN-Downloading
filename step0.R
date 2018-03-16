@@ -1,5 +1,5 @@
 # Read Raw Data
-rawData <- readLines("../../log0.txt")
+rawData <- readLines("log0.txt")
 options(scipen=999)
 
 # Extract Data Data
@@ -97,4 +97,5 @@ for (rowNumber in 1:nrow(df)) {
   }
 }
 plot(df$rtt[startIndex:endIndex], xlab="Data ID", ylab="Round-Trip Time")
-plot(df$hopcount[startIndex:endIndex], xlab="Data ID", ylab="Hop Number")
+# plot(df$hopcount[startIndex:endIndex], xlab="Data ID", ylab="Hop Number")
+plot(df$hopcount[1:350], xlab="Data ID", ylab="Hop Number")
