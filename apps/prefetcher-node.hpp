@@ -70,6 +70,7 @@ class PrefetcherNode {
       std::string last_ap = decode(n.get(-1).toUri());
       auto seq1 = n.get(-2).toNumber();
       auto seq2 = n.get(-3).toNumber();
+      NS_LOG_INFO( "node(" << nid_ << ") will help to fetch seq " << seq1 << " to " << seq2);
 
       ns3::Address cur_ap_addr = getCurrentAP_();
       std::ostringstream os;
@@ -77,7 +78,7 @@ class PrefetcherNode {
       std::string cur_ap = os.str().c_str();
       std::cout << "node(" << nid_ << "), last ap = " << last_ap << ", current ap = " << cur_ap << std::endl;
 
-      for (int i = seq1; i < seq2 + 1; i++) {
+      for (int i = seq2; i < seq1 + 1; i++) {
         auto real_interest_name = Name(prefix_).appendSequenceNumber(i);
         // send the real interest
         Interest preInterest(real_interest_name, time::seconds(2));

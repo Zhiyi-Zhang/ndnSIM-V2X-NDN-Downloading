@@ -65,7 +65,7 @@ namespace ns3 {
  *
  * With LOGGING: e.g.
  *
- *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step2-vfetch 2>&1 | tee log2.txt
+ *     NS_LOG=ndn.Consumer:ndn.Producer:ndn.Prefetcher ./waf --run=step2-vfetch 2>&1 | tee log2.txt
  */
 
 int main (int argc, char *argv[])
