@@ -66,8 +66,10 @@ class PrefetcherNode {
     if (!multiHop_) {
       // one-hop V2V communication
       // interest: /prefetch/prefix_/seq/[last-ap], prefix_ = /youtube/video00
+      // interest: /prefetch/prefix/seq1/seq2/ap
       std::string last_ap = decode(n.get(-1).toUri());
-      auto seq = n.get(-2).toNumber();
+      auto seq1 = n.get(-2).toNumber();
+      auto seq2 = n.get(-3).toNumber();
 
       ns3::Address cur_ap_addr = getCurrentAP_();
       std::ostringstream os;
@@ -75,20 +77,22 @@ class PrefetcherNode {
       std::string cur_ap = os.str().c_str();
       std::cout << "node(" << nid_ << "), last ap = " << last_ap << ", current ap = " << cur_ap << std::endl;
 
-      auto real_interest_name = Name(prefix_).appendNumber(seq);
-      // send the real interest
-      Interest i(real_interest_name, time::seconds(2));
-      face_.expressInterest(i, std::bind(&PrefetcherNode::OnRemoteData, this, _2),
-                            [](const Interest&, const lp::Nack&) {},
-                            [](const Interest&) {});
-      NS_LOG_INFO( "node(" << nid_ << ") send out Interest: " << real_interest_name.toUri() );
+      for (int i = seq1; i < seq2 + 1; i++) {
+        auto real_interest_name = Name(prefix_).appendSequenceNumber(i);
+        // send the real interest
+        Interest preInterest(real_interest_name, time::seconds(2));
+        face_.expressInterest(preInterest, std::bind(&PrefetcherNode::OnRemoteData, this, _2),
+                              [](const Interest&, const lp::Nack&) {},
+                              [](const Interest&) {});
+        NS_LOG_INFO( "node(" << nid_ << ") send out Interest: " << real_interest_name.toUri() );
+      }
     }
     else {
       // multi-hop V2V communication
       // interest: /prefetch/prefix_/seq/[max_hop]
-      // if the car is not on the correct direction, drop this interest 
+      // if the car is not on the correct direction, drop this interest
       // correct direction: the ap-address is larger than last-ap
-      
+
     }
   }
 
