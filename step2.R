@@ -115,3 +115,38 @@ for (i in 1:50) {
   df2$packetNum[i] <- counter
 }
 plot(df2$packetNum[1:50], xlab="Time", ylab="Downloading Rate", type="o", col="blue")
+
+
+# calculate how long it take to recovery all the pre-fetched Data packets
+deltaTime <- function(startIndex, endIndex) {
+  sendingTime <- 0
+  for (i in 1:length(RecoveryInterestData)) {
+    item <- strsplit(as.character(RecoveryInterestData[i]), " ")
+    index <- as.numeric(item[[1]][2])
+    sendTime <- as.numeric(item[[1]][1])
+    if (index >= startIndex && index <= endIndex) {
+      sendingTime <- sendTime
+      break
+    }
+  }
+  latestRecievingTime <- 0
+  for (i in 1:length(dataData)) {
+    item <- strsplit(as.character(dataData[i]), " ")
+    index <- as.numeric(item[[1]][2])
+    recieveTime <- as.numeric(item[[1]][1])
+    if (index >= startIndex && index <= endIndex) {
+      if (recieveTime > latestRecievingTime) {
+        latestRecievingTime = recieveTime
+      }
+    }
+  }
+  return(latestRecievingTime - sendingTime)
+}
+deltaTimeResult <- c(
+  deltaTime(startIndex = 55, endIndex = 64),
+  deltaTime(startIndex = 118, endIndex = 127),
+  deltaTime(startIndex = 183, endIndex = 192),
+  deltaTime(startIndex = 247, endIndex = 255),
+  deltaTime(startIndex = 310, endIndex = 319)
+)
+summary(deltaTimeResult)
