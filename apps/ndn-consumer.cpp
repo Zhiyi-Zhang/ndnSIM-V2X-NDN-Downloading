@@ -213,10 +213,8 @@ Consumer::SendPacket()
         return; // we are totally done
       }
     }
-
     seq = m_seq++;
   }
-
   if (seq <= avoidSeqEnd &&  seq >= avoidSeqStart && avoidSeqStart != 0) {
     // don't send it out because it's already sent
   }
@@ -259,8 +257,8 @@ Consumer::SendPacket()
       NS_LOG_INFO ("SET AVOIDSEQ START: " << avoidSeqStart);
       NS_LOG_INFO ("SET AVOIDSEQ END: " << avoidSeqEnd);
 
-      for (auto pre_seq: pre_fetch_seq) {
-        NS_LOG_INFO ("Current apCounter: " << apCounter);
+      for (int pre_seq = avoidSeqStart; pre_seq < avoidSeqEnd+1; pre_seq++) {
+        NS_LOG_INFO("Current apCounter: " << apCounter);
         pre_fetch.insert(pre_seq);
         shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
         nameWithSequence->appendSequenceNumber(pre_seq);
@@ -332,7 +330,7 @@ Consumer::SendPacket()
       // /prefetch/prefix/seq1/seq2/ap
       shared_ptr<Name> nameWithSequence = make_shared<Name>(Name("/prefetch"));
       nameWithSequence->append(m_interestName);
-      nameWithSequence->appendNumber(pre_fetch_seq.front());
+      nameWithSequence->appendNumber(pre_fetch_seq.front() - 1);
       nameWithSequence->appendNumber(pre_fetch_seq.back());
       Address ap = GetCurrentAP();
       std::ostringstream os;
@@ -346,7 +344,7 @@ Consumer::SendPacket()
       interest->setInterestLifetime(interestLifeTime);
 
       NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication for "
-                  << pre_fetch_seq.front() << " to " << pre_fetch_seq.back());
+                  << pre_fetch_seq.front() - 1 << " to " << pre_fetch_seq.back());
 
       sendPrefetchInterest(interest);
     }
