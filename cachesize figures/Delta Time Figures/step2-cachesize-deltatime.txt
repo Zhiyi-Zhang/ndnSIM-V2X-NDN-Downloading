@@ -1,0 +1,28 @@
+step2 cache3
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.2711  0.2801  0.2811  0.2792  0.2813  0.2825 
+step2 cache4
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.2612  0.2615  0.2714  0.2677  0.2718  0.2727 
+step2 cache5
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.2520  0.2617  0.2617  0.2602  0.2624  0.2634 
+step2 cache6
+  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.2427  0.2528  0.2537  0.4556  0.7143  0.8143 
+step2 cache7
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.2330  0.2424  0.2429  0.2412  0.2436  0.2439 
+step2 cache8
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.2238  0.2330  0.2332  0.3276  0.2337  0.7143 
+step2 cache9
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.2143  0.2237  0.2238  0.2219  0.2238  0.2240 
+step2 cache10
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.1107  0.1194  0.1196  0.1966  0.1215  0.5117 
+step2 cache1000
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.1107  0.1194  0.1196  0.1966  0.1215  0.5117 
+
