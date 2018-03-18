@@ -189,6 +189,80 @@ Consumer::StopApplication() // Called at time specified by Stop
   App::StopApplication();
 }
 
+void 
+Consumer::SendGeneralInterestToFace257(uint32_t seq)
+{
+  shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
+  nameWithSequence->appendSequenceNumber(seq);
+
+  shared_ptr<Interest> interest = make_shared<Interest>();
+  interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
+  interest->setName(*nameWithSequence);
+  interest->setTag<lp::NextHopFaceIdTag>(make_shared<lp::NextHopFaceIdTag>(257));
+  time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
+  interest->setInterestLifetime(interestLifeTime);
+
+  WillSendOutInterest(seq);
+
+  m_transmittedInterests(interest, this, m_face);
+  m_appLink->onReceiveInterest(*interest);
+}
+
+void
+Consumer::SendGeneralInterest(uint32_t seq)
+{
+  shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
+  nameWithSequence->appendSequenceNumber(seq);
+
+  shared_ptr<Interest> interest = make_shared<Interest>();
+  interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
+  interest->setName(*nameWithSequence);
+  time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
+  interest->setInterestLifetime(interestLifeTime);
+
+  WillSendOutInterest(seq);
+
+  m_transmittedInterests(interest, this, m_face);
+  m_appLink->onReceiveInterest(*interest);
+}
+
+void
+Consumer::SendPrefetchInterest(uint32_t seq)
+{
+  shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
+  nameWithSequence->appendSequenceNumber(seq);
+
+  shared_ptr<Interest> interest = make_shared<Interest>();
+  interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
+  interest->setName(*nameWithSequence);
+  time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
+  interest->setInterestLifetime(interestLifeTime);
+
+  m_transmittedInterests(interest, this, m_face);
+  m_appLink->onReceiveInterest(*interest);
+}
+
+void
+Consumer::SendBundledInterest(int seq1, int seq2) {
+  shared_ptr<Name> nameWithSequence = make_shared<Name>(Name("/prefetch"));
+  nameWithSequence->append(m_interestName);
+  nameWithSequence->appendNumber(seq1);
+  nameWithSequence->appendNumber(seq2);
+  Address ap = GetCurrentAP();
+  std::ostringstream os;
+  os << ap;
+  nameWithSequence->append(os.str().c_str());
+
+  shared_ptr<Interest> interest = make_shared<Interest>();
+  interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
+  interest->setName(*nameWithSequence);
+  time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
+  interest->setInterestLifetime(interestLifeTime);
+
+  m_transmittedInterests(interest, this, m_face);
+  m_appLink->onReceiveInterest(*interest);
+}
+
 void
 Consumer::SendPacket()
 {
@@ -215,25 +289,25 @@ Consumer::SendPacket()
     }
     seq = m_seq++;
   }
-  if (seq <= avoidSeqEnd &&  seq >= avoidSeqStart && avoidSeqStart != 0) {
-    // don't send it out because it's already sent
+
+  if (m_step3 == true) {
+    if (seq <= avoidSeqEnd &&  seq >= avoidSeqStart && avoidSeqStart != 0) {
+      SendGeneralInterestToFace257(seq);
+      NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
+    }
+    else {
+      SendGeneralInterest(seq);
+      NS_LOG_INFO("> Interest for " << seq);
+    }
   }
   else {
-    shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
-    nameWithSequence->appendSequenceNumber(seq);
-
-    shared_ptr<Interest> interest = make_shared<Interest>();
-    interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
-    interest->setName(*nameWithSequence);
-    time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
-    interest->setInterestLifetime(interestLifeTime);
-
-    NS_LOG_INFO("> Interest for " << seq);
-
-    WillSendOutInterest(seq);
-
-    m_transmittedInterests(interest, this, m_face);
-    m_appLink->onReceiveInterest(*interest);
+    if (seq <= avoidSeqEnd &&  seq >= avoidSeqStart && avoidSeqStart != 0) {
+    // don't send it out because it's already sent
+    }
+    else {
+      SendGeneralInterest(seq);
+      NS_LOG_INFO("> Interest for " << seq);
+    }
   }
 
   ///////////////////////////////////////////
@@ -259,53 +333,18 @@ Consumer::SendPacket()
 
       for (int pre_seq = avoidSeqStart; pre_seq < avoidSeqEnd+1; pre_seq++) {
         NS_LOG_INFO("Current apCounter: " << apCounter);
-        pre_fetch.insert(pre_seq);
-        shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
-        nameWithSequence->appendSequenceNumber(pre_seq);
-
-        shared_ptr<Interest> interest = make_shared<Interest>();
-        interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
-        interest->setName(*nameWithSequence);
-        time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
-        interest->setInterestLifetime(interestLifeTime);
-
+        SendPrefetchInterest(pre_seq);
         NS_LOG_INFO("> Pre-Fetch Interest for " << pre_seq);
-
-        m_transmittedInterests(interest, this, m_face);
-        m_appLink->onReceiveInterest(*interest);
       }
     }
     if (dumpRtxQueue) {
       NS_LOG_INFO("DumpRtxQueue is true");
-      std::vector<uint32_t> seqToBeSend;
-      // for (const auto& timeoutEntry : m_seqTimeouts) {
-      //   seq = timeoutEntry.seq;
-      //   seqToBeSend.push_back(seq);
-      // }
       for (int i = avoidSeqStart; i < avoidSeqEnd + 1; i++) {
-        seqToBeSend.push_back(i);
+        SendGeneralInterest(i);
+        NS_LOG_INFO("> Recovery Interest for " << i);
       }
-      for (const auto& seqNumber : seqToBeSend) {
-        shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
-        nameWithSequence->appendSequenceNumber(seqNumber);
-
-        shared_ptr<Interest> interest = make_shared<Interest>();
-        interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
-        interest->setName(*nameWithSequence);
-        time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
-        interest->setInterestLifetime(interestLifeTime);
-
-        NS_LOG_INFO("> Recovery Interest for " << seqNumber);
-
-        WillSendOutInterest(seqNumber);
-
-        m_transmittedInterests(interest, this, m_face);
-        m_appLink->onReceiveInterest(*interest);
-      }
-
       avoidSeqStart = avoidSeqEnd = 0;
     }
-
   }
   if (m_step2 == true) {
     // prefetch by one-hop V2V communiaction
@@ -328,55 +367,40 @@ Consumer::SendPacket()
       NS_LOG_INFO ("SET AVOIDSEQ END: " << avoidSeqEnd);
 
       // /prefetch/prefix/seq1/seq2/ap
-      shared_ptr<Name> nameWithSequence = make_shared<Name>(Name("/prefetch"));
-      nameWithSequence->append(m_interestName);
-      nameWithSequence->appendNumber(pre_fetch_seq.front() - 1);
-      nameWithSequence->appendNumber(pre_fetch_seq.back());
-      Address ap = GetCurrentAP();
-      std::ostringstream os;
-      os << ap;
-      nameWithSequence->append(os.str().c_str());
-
-      shared_ptr<Interest> interest = make_shared<Interest>();
-      interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
-      interest->setName(*nameWithSequence);
-      time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
-      interest->setInterestLifetime(interestLifeTime);
-
+      SendBundledInterest(pre_fetch_seq.front() - 1, pre_fetch_seq.back());
       NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication for "
                   << pre_fetch_seq.front() - 1 << " to " << pre_fetch_seq.back());
-
-      sendPrefetchInterest(interest);
     }
 
     if (dumpRtxQueue) {
       NS_LOG_INFO("DumpRtxQueue is true");
-      std::vector<uint32_t> seqToBeSend;
-      // for (const auto& timeoutEntry : m_seqTimeouts) {
-      //   seq = timeoutEntry.seq;
-      //   seqToBeSend.push_back(seq);
-      // }
       for (int i = avoidSeqStart; i < avoidSeqEnd + 1; i++) {
-        seqToBeSend.push_back(i);
+        SendGeneralInterest(i);
+        NS_LOG_INFO("> Recovery Interest for " << i);
       }
-      for (const auto& seqNumber : seqToBeSend) {
-        shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
-        nameWithSequence->appendSequenceNumber(seqNumber);
+      avoidSeqStart = avoidSeqEnd = 0;
+    }
+  }
+  if (m_step3 == true) {
+    std::string rtt_str = "[";
+    for (auto entry: traffic_info.real_rtt) {
+      rtt_str += std::to_string(entry) + ",";
+    }
+    rtt_str += "]";
+    NS_LOG_INFO ("Current Real RTT: " << rtt_str );
 
-        shared_ptr<Interest> interest = make_shared<Interest>();
-        interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
-        interest->setName(*nameWithSequence);
-        time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
-        interest->setInterestLifetime(interestLifeTime);
+    std::vector<uint32_t> pre_fetch_seq;
+    bool dumpRtxQueue = false;
+    std::tie(pre_fetch_seq, dumpRtxQueue) = ns3::moreInterestsToSend(m_seq, traffic_info, this->apCounter);
+    if (pre_fetch_seq.size() > 0) {
+      avoidSeqStart = pre_fetch_seq.front() - 1;
+      avoidSeqEnd = pre_fetch_seq.back();
+      NS_LOG_INFO ("SET AVOIDSEQ START: " << avoidSeqStart);
+      NS_LOG_INFO ("SET AVOIDSEQ END: " << avoidSeqEnd);
+    }
 
-        NS_LOG_INFO("> Recovery Interest for " << seqNumber);
-
-        WillSendOutInterest(seqNumber);
-
-        m_transmittedInterests(interest, this, m_face);
-        m_appLink->onReceiveInterest(*interest);
-      }
-
+    if (dumpRtxQueue) {
+      NS_LOG_INFO("DumpRtxQueue is true");
       avoidSeqStart = avoidSeqEnd = 0;
     }
   }
@@ -386,14 +410,6 @@ Consumer::SendPacket()
   ///////////////////////////////////////////
 
   ScheduleNextPacket();
-}
-
-void
-Consumer::sendPrefetchInterest(shared_ptr<Interest> interest) {
-  NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication, Name: " << interest->getName().toUri() );
-
-  m_transmittedInterests(interest, this, m_face);
-  m_appLink->onReceiveInterest(*interest);
 }
 
 ///////////////////////////////////////////////////
@@ -431,19 +447,14 @@ Consumer::OnData(shared_ptr<const Data> data)
 
   App::OnData(data); // tracing inside
 
-  NS_LOG_FUNCTION(this << data);
+  // NS_LOG_FUNCTION(this << data);
+  NS_LOG_INFO("DATA Name = " << data->getName().toUri() );
 
   // NS_LOG_INFO ("Received content object: " << boost::cref(*data));
 
   // This could be a problem......
   uint32_t seq = data->getName().at(-1).toSequenceNumber();
 
-  // if the data is for pre-fetch interest, drop it!
-  // if (pre_fetch.find(seq) != pre_fetch.end()) {
-  //   pre_fetch.erase(seq);
-  //   NS_LOG_INFO("< Pre-Fetch DATA for: " << seq << ", DROP!");
-  //   return;
-  // }
   NS_LOG_INFO("< DATA for " << seq);
 
   int hopCount = 0;
@@ -535,6 +546,9 @@ Consumer::WillSendOutInterest(uint32_t sequenceNumber)
   m_seqRetxCounts[sequenceNumber]++;
 
   m_rtt->SentSeq(SequenceNumber32(sequenceNumber), 1);
+
+  // set up the retx timer for current interest
+  // Simulator::Schedule(kRetxTimer, &Consumer::OnTimeout, this, sequenceNumber);
 }
 
 bool
