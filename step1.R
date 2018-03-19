@@ -144,10 +144,10 @@ return(latestRecievingTime - sendingTime)
 }
 deltaTimeResult <- c(
 deltaTime(startIndex = 55, endIndex = 63),
-deltaTime(startIndex = 119, endIndex = 127),
-deltaTime(startIndex = 183, endIndex = 191),
-deltaTime(startIndex = 249, endIndex = 257),
-deltaTime(startIndex = 312, endIndex = 320)
+deltaTime(startIndex = 119, endIndex = 128),
+deltaTime(startIndex = 184, endIndex = 193),
+deltaTime(startIndex = 250, endIndex = 259),
+deltaTime(startIndex = 315, endIndex = 324)
 )
 summary(deltaTimeResult)
 
