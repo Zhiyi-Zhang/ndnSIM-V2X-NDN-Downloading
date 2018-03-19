@@ -7,5 +7,5 @@ docs/doxygen.warnings.log
 docs/introspected-doxygen.hpp
 docs/ndnSIM.tag
 .R*
-*.pdf
-log*.txt
+./*.pdf
+./log*.txt

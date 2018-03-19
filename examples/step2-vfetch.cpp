@@ -80,9 +80,11 @@ int main (int argc, char *argv[])
   double speed = (double)(bottomrow*spacing)/endtime; //setting speed to span full sim time
 
   string animFile = "ap-mobility-animation.xml";
+  string hitRatio = "1.0";
 
   CommandLine cmd;
   cmd.AddValue ("animFile", "File Name for Animation Output", animFile);
+  cmd.AddValue("hitRatio", "CS hit ratio", hitRatio);
   cmd.Parse (argc, argv);
 
   ////// Reading file for topology setup
@@ -206,7 +208,7 @@ int main (int argc, char *argv[])
   NS_LOG_INFO("Installing NDN stack");
   ndn::StackHelper ndnHelper;
   //ndnHelper.InstallAll();
-  ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "1000");
+  ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "1000", "HitRatio", hitRatio);
   //ndnHelper.SetDefaultRoutes(true);
   //ndnHelper.SetOldContentStore("ns3::ndn::cs::Nocache");
   // ndnHelper.InstallAll();
