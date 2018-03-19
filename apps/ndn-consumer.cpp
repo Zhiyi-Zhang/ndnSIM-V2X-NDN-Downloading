@@ -189,7 +189,7 @@ Consumer::StopApplication() // Called at time specified by Stop
   App::StopApplication();
 }
 
-void 
+void
 Consumer::SendGeneralInterestToFace257(uint32_t seq)
 {
   shared_ptr<Name> nameWithSequence = make_shared<Name>(m_interestName);
@@ -290,26 +290,6 @@ Consumer::SendPacket()
     seq = m_seq++;
   }
 
-  if (m_step3 == true) {
-    if (seq <= avoidSeqEnd &&  seq >= avoidSeqStart && avoidSeqStart != 0) {
-      SendGeneralInterestToFace257(seq);
-      NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
-    }
-    else {
-      SendGeneralInterest(seq);
-      NS_LOG_INFO("> Interest for " << seq);
-    }
-  }
-  else {
-    if (seq <= avoidSeqEnd &&  seq >= avoidSeqStart && avoidSeqStart != 0) {
-    // don't send it out because it's already sent
-    }
-    else {
-      SendGeneralInterest(seq);
-      NS_LOG_INFO("> Interest for " << seq);
-    }
-  }
-
   ///////////////////////////////////////////
   //          Start of Algorithm           //
   ///////////////////////////////////////////
@@ -408,6 +388,26 @@ Consumer::SendPacket()
   ///////////////////////////////////////////
   //          End of Algorithm             //
   ///////////////////////////////////////////
+
+  if (m_step3 == true) {
+    if (seq <= avoidSeqEnd &&  seq >= avoidSeqStart && avoidSeqStart != 0) {
+      SendGeneralInterestToFace257(seq);
+      NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
+    }
+    else {
+      SendGeneralInterest(seq);
+      NS_LOG_INFO("> Interest for " << seq);
+    }
+  }
+  else {
+    if (seq <= avoidSeqEnd &&  seq >= avoidSeqStart && avoidSeqStart != 0) {
+    // don't send it out because it's already sent
+    }
+    else {
+      SendGeneralInterest(seq);
+      NS_LOG_INFO("> Interest for " << seq);
+    }
+  }
 
   ScheduleNextPacket();
 }

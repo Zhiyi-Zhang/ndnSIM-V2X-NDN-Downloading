@@ -142,11 +142,61 @@ deltaTime <- function(startIndex, endIndex) {
   }
   return(latestRecievingTime - sendingTime)
 }
+
+s1 <- 0
+s2 <- 0
+s3 <- 0
+s4 <- 0
+s5 <- 0
+e1 <- 0
+e2 <- 0
+e3 <- 0
+e4 <- 0
+e5 <- 0
+lastIndex <- 0
+
+for (i in 1:length(RecoveryInterestData)) {
+  item <- strsplit(as.character(RecoveryInterestData[i]), " ")
+  index <- as.numeric(item[[1]][2])
+  
+  if (i == 1) {
+    s1 <- index
+  }
+  
+  if (index == lastIndex + 1 && lastIndex != 0) {
+    # do nothing
+  }
+  else {
+    if (s2 == 0  && lastIndex != 0) {
+      s2 <- index
+      e1 <- lastIndex
+    }
+    else if (s3 == 0  && lastIndex != 0) {
+      s3 <- index
+      e2 <- lastIndex
+    }
+    else if (s4 == 0  && lastIndex != 0) {
+      s4 <- index
+      e3 <- lastIndex
+    }
+    else if (s5 == 0  && lastIndex != 0) {
+      s5 <- index
+      e4 <- lastIndex
+    }
+  }
+  
+  if (i == length(RecoveryInterestData)) {
+    e5 <- index
+  }
+  lastIndex <- index
+}
+
+
 deltaTimeResult <- c(
-  deltaTime(startIndex = 55, endIndex = 64),
-  deltaTime(startIndex = 116, endIndex = 125),
-  deltaTime(startIndex = 182, endIndex = 191),
-  deltaTime(startIndex = 244, endIndex = 252),
-  deltaTime(startIndex = 306, endIndex = 315)
+  deltaTime(startIndex = s1, endIndex = e1),
+  deltaTime(startIndex = s2, endIndex = e2),
+  deltaTime(startIndex = s3, endIndex = e3),
+  deltaTime(startIndex = s4, endIndex = e4),
+  deltaTime(startIndex = s5, endIndex = e5)
 )
 summary(deltaTimeResult)
