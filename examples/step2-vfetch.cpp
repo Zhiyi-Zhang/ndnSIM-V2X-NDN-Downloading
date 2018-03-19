@@ -196,7 +196,7 @@ int main (int argc, char *argv[])
     Vector vel(speed, 0, 0);
     cvmm->SetPosition(pos);
     cvmm->SetVelocity(vel);
-    nxt += 50;
+    nxt += 80;
   }
 
   // std::cout << "position: " << cvmm->GetPosition() << " velocity: " << cvmm->GetVelocity() << std::endl;

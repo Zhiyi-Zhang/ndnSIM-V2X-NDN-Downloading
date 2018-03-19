@@ -144,9 +144,9 @@ deltaTime <- function(startIndex, endIndex) {
 }
 deltaTimeResult <- c(
   deltaTime(startIndex = 55, endIndex = 64),
-  deltaTime(startIndex = 118, endIndex = 127),
-  deltaTime(startIndex = 183, endIndex = 192),
-  deltaTime(startIndex = 247, endIndex = 255),
-  deltaTime(startIndex = 310, endIndex = 319)
+  deltaTime(startIndex = 116, endIndex = 125),
+  deltaTime(startIndex = 182, endIndex = 191),
+  deltaTime(startIndex = 244, endIndex = 252),
+  deltaTime(startIndex = 306, endIndex = 315)
 )
 summary(deltaTimeResult)
