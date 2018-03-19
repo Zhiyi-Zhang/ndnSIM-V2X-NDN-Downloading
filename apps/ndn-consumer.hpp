@@ -135,6 +135,18 @@ protected:
   virtual void
   ScheduleNextPacket() = 0;
 
+  void
+  SendGeneralInterest(uint32_t seq);
+
+  void
+  SendGeneralInterestToFace257(uint32_t seq);
+
+  void
+  SendPrefetchInterest(uint32_t seq);
+
+  void
+  SendBundledInterest(int seq1, int seq2);
+
   /**
    * \brief Checks if the packet need to be retransmitted becuase of retransmission timer expiration
    */
@@ -154,9 +166,6 @@ protected:
    */
   Time
   GetRetxTimer() const;
-
-  void
-  sendPrefetchInterest(shared_ptr<Interest> interest);
 
 protected:
   Ptr<UniformRandomVariable> m_rand; ///< @brief nonce generator
@@ -240,7 +249,6 @@ protected:
 
   // used for pre-cache project
   TrafficInfo traffic_info;
-  std::unordered_set<uint32_t> pre_fetch;
 
   std::set<uint32_t> data_cache;
 

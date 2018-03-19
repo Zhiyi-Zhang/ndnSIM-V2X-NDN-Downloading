@@ -223,10 +223,7 @@ int main (int argc, char *argv[])
   ndnHelper.Install(Names::Find<Node>("r4"));
   ndnHelper.Install(Names::Find<Node>("r5"));
   ndnHelper.Install(Names::Find<Node>("r6"));
-
-  ndn::StackHelper ndnHelper1;
-  ndnHelper1.SetOldContentStore("ns3::ndn::cs::Nocache");
-  ndnHelper1.Install(consumers);
+  ndnHelper.Install(consumers);
 
   // Choosing forwarding strategy
   ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/multicast");
@@ -255,18 +252,10 @@ int main (int argc, char *argv[])
   consumerHelper.SetPrefix("/youtube/video001");
   // consumerHelper.SetPrefix("/youtube/prefix");
   consumerHelper.SetAttribute("Frequency", DoubleValue(10.0));
-  consumerHelper.SetAttribute("Step2", BooleanValue(true));
+  consumerHelper.SetAttribute("Step3", BooleanValue(true));
   // consumerHelper.SetAttribute("RetxTimer", );
   consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));
   // consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.0));
-
-  // Prefetcher Helpers
-  for (int i = 1; i < wifiSta; ++i) {
-    ndn::AppHelper prefetcherHelper("PrefetcherApp");
-    prefetcherHelper.SetAttribute("NodeID", UintegerValue(i));
-    prefetcherHelper.SetAttribute("Prefix", StringValue("/youtube/video001"));
-    prefetcherHelper.Install(consumers.Get(i)).Start(Seconds(0.1));
-  }
 
   for (auto consumer: consumers) {
     ndn::FibHelper::AddRouteForDevice(consumer, "/youtube/video001", std::numeric_limits<int32_t>::max(), 0);

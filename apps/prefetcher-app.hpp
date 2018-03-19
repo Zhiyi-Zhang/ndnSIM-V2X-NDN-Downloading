@@ -22,9 +22,8 @@ public:
       .AddAttribute("Prefix", "Prefix for prefetcher", StringValue("/"),
                     ndn::MakeNameAccessor(&PrefetcherApp::prefix_), ndn::MakeNameChecker())
       .AddAttribute("NodeID", "NodeID for prefetcher", UintegerValue(0),
-                    MakeUintegerAccessor(&PrefetcherApp::nid_), MakeUintegerChecker<uint64_t>())
-      .AddAttribute("MultiHop", "V2V MultiHop Communication", BooleanValue(false),
-                    MakeBooleanAccessor(&PrefetcherApp::multiHop), MakeBooleanChecker());
+                    MakeUintegerAccessor(&PrefetcherApp::nid_), MakeUintegerChecker<uint64_t>());
+
 
     return tid;
   }
@@ -45,7 +44,7 @@ protected:
   virtual void
   StartApplication()
   {
-    m_instance.reset(new ::ndn::PrefetcherNode(prefix_, nid_, multiHop, std::bind(&PrefetcherApp::GetCurrentAP, this)));
+    m_instance.reset(new ::ndn::PrefetcherNode(prefix_, nid_, std::bind(&PrefetcherApp::GetCurrentAP, this)));
     m_instance->Start();
   }
 
@@ -59,7 +58,6 @@ private:
   std::unique_ptr<::ndn::PrefetcherNode> m_instance;
   ndn::Name prefix_;
   uint64_t nid_;
-  bool multiHop;
 };
 
 }
