@@ -62,8 +62,10 @@ def configure(conf):
 
         boost_version = conf.env.BOOST_VERSION.split('_')
         if int(boost_version[0]) < 1 or int(boost_version[1]) < 54:
+            Logs.error (boost_version[0])
+            Logs.error (boost_version[1])
             conf.report_optional_feature("ndnSIM", "ndnSIM", False,
-                                         "ndnSIM requires at least boost version 1.54")
+                                         "ndnSIM requires at least boost version 1.54, %s %s" % ''.join(boost_version[0],boost_version[1]) )
             conf.env['MODULES_NOT_BUILT'].append('ndnSIM')
 
             Logs.error ("ndnSIM will not be build as it requires boost libraries of version at least 1.54")
