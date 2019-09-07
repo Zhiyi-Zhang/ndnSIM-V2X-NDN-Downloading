@@ -65,7 +65,7 @@ namespace ns3 {
  *
  * With LOGGING: e.g.
  *
- *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step1 2>&1 | tee log1.txt
+ *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step3 2>&1 | tee src/ndnSIM/results/strawman.txt
  */
 
 int main (int argc, char *argv[])

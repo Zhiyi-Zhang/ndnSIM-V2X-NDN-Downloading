@@ -87,7 +87,7 @@ ConsumerCbr::ScheduleNextPacket()
   // std::cout << "next: " << Simulator::Now().ToDouble(Time::S) + mean << "s\n";
 
   if (m_firstTime) {
-    m_sendEvent = Simulator::Schedule(Seconds(0.0), &Consumer::SendPacket, this);
+    m_sendEvent = Simulator::Schedule(Seconds(0.0), &ConsumerCbr::sendPackett, this);
     m_firstTime = false;
     // start timer for dispalying video data
     Simulator::Schedule(Seconds(1.0 / kDisplayRate), &ConsumerCbr::DisplayData, this);
@@ -95,7 +95,13 @@ ConsumerCbr::ScheduleNextPacket()
   else if (!m_sendEvent.IsRunning())
     m_sendEvent = Simulator::Schedule((m_random == 0) ? Seconds(1.0 / m_frequency)
                                                       : Seconds(m_random->GetValue()),
-                                      &Consumer::SendPacket, this);
+                                      &ConsumerCbr::sendPackett, this);
+}
+
+void
+ConsumerCbr::sendPackett()
+{
+  SendPacket(m_frequency);
 }
 
 void

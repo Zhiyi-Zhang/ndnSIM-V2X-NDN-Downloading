@@ -163,7 +163,7 @@ ConsumerWindow::ScheduleNextPacket()
     m_sendEvent =
       Simulator::Schedule(Seconds(
                             std::min<double>(0.5, m_rtt->RetransmitTimeout().ToDouble(Time::S))),
-                          &Consumer::SendPacket, this);
+                          &Consumer::SendPacket, this, 0);
   }
   else if (m_inFlight >= m_window) {
     // simply do nothing
@@ -173,7 +173,7 @@ ConsumerWindow::ScheduleNextPacket()
       Simulator::Remove(m_sendEvent);
     }
 
-    m_sendEvent = Simulator::ScheduleNow(&Consumer::SendPacket, this);
+    m_sendEvent = Simulator::ScheduleNow(&Consumer::SendPacket, this, 0);
   }
 }
 

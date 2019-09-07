@@ -66,7 +66,7 @@ namespace ns3 {
  *
  * With LOGGING: e.g.
  *
- *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step0 2>&1 | tee log0.txt
+ *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step3 2>&1 | tee src/ndnSIM/results/pure-ndn.txt
  *     NS_LOG=YansWifiPhy=level_all|prefix_func|prefix_time ./waf --run=step0 2>&1 | tee log0.txt
  */
 

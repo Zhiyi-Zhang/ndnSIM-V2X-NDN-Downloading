@@ -14,8 +14,8 @@
 
 namespace ns3 {
 
-std::tuple<std::vector<uint32_t>, bool>
-moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo, int& apCounter);
+std::tuple<std::vector<uint32_t>, bool, bool>
+moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo, int& apCounter, int frequency);
 
 std::tuple<std::vector<uint32_t>, bool>
 oneHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo, int& apCounter);

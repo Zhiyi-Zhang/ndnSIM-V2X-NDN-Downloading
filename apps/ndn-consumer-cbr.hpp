@@ -73,6 +73,10 @@ protected:
   void
   DisplayData();
 
+  // a wrapper function of consumer::sendpacket()
+  void
+  sendPackett();
+
 protected:
   double m_frequency; // Frequency of interest packets (in hertz)
   bool m_firstTime;

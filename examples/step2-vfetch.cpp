@@ -65,7 +65,7 @@ namespace ns3 {
  *
  * With LOGGING: e.g.
  *
- *     NS_LOG=ndn.Consumer:ndn.Producer:ndn.Prefetcher ./waf --run=step2-vfetch 2>&1 | tee log2.txt
+ *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step3 2>&1 | tee src/ndnSIM/results/interest-only.txt
  */
 
 int main (int argc, char *argv[])
@@ -254,7 +254,7 @@ int main (int argc, char *argv[])
   ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   consumerHelper.SetPrefix("/youtube/video001");
   // consumerHelper.SetPrefix("/youtube/prefix");
-  consumerHelper.SetAttribute("Frequency", DoubleValue(10.0));
+  consumerHelper.SetAttribute("Frequency", DoubleValue(20.0));
   consumerHelper.SetAttribute("Step2", BooleanValue(true));
   // consumerHelper.SetAttribute("RetxTimer", );
   consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));

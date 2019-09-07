@@ -83,7 +83,7 @@ public:
    * @brief Actually send packet
    */
   void
-  SendPacket();
+  SendPacket(int freqency = 0);
 
   /**
    * @brief Get the data(seq) from cache(data_cache)

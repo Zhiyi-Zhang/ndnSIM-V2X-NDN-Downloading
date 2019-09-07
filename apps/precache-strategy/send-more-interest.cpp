@@ -29,7 +29,8 @@ const std::vector<int64_t> entering_tp = {7000000000/*7, 210m, AP1*/,
 const int64_t wifilessInterval = 333333333*2; /*0.333s*2*/
 
 
-const int64_t thresholdAfterEnteringAP = 100000000; /*0.100s*/
+const int64_t thresholdAfterEnteringAP = 50000000; /*0.050s*/
+const int64_t gracePeriod = 350000000; // 0.32s
 
 
 /**
@@ -39,11 +40,11 @@ const int64_t thresholdAfterEnteringAP = 100000000; /*0.100s*/
  * @param The vector length does not need to be a fixed value
  * @return The seq(s) of packet to be sent
  */
-std::tuple<std::vector<uint32_t>, bool>
-moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo, int& apCounter)
+std::tuple<std::vector<uint32_t>, bool/*recover?*/, bool/*has coverage?*/>
+moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo, int& apCounter, int frequency)
 {
   if (trafficInfo.real_rtt.size() < 2)
-    return std::make_tuple(std::vector<uint32_t>(0), false);
+    return std::make_tuple(std::vector<uint32_t>(0), false, true);
 
   // ordinary least squares of line regression
   double sumX = 0;
@@ -80,23 +81,32 @@ moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo traffi
       }
 
       std::vector<uint32_t> result;
-      int insideNumber = static_cast<int>(threshold / 100000000);
-      int outsideNumber = static_cast<int>(wifilessInterval / 100000000);
+      int insideNumber = static_cast<int>(threshold / 1000000000.0 * frequency);
+      int outsideNumber = static_cast<int>((wifilessInterval + gracePeriod) / 1000000000.0 * frequency);
       for (int j = 0; j < insideNumber + outsideNumber + 1; j++) {
         result.push_back(seqJustSent + j);
       }
       apCounter++;
-      return std::make_tuple(result, false);
+      return std::make_tuple(result, false, true); // still have coverage
     }
   }
 
   // after arriving
   for (int i = 0; i < entering_tp.size(); i++) {
-    if (currentTp > entering_tp[i] + 200000000 && currentTp - entering_tp[i] - 200000000 <= thresholdAfterEnteringAP) {
-      return std::make_tuple(std::vector<uint32_t>(0), true);
+    if (currentTp > entering_tp[i] + gracePeriod && currentTp - entering_tp[i] - gracePeriod <= thresholdAfterEnteringAP) {
+      return std::make_tuple(std::vector<uint32_t>(0), true, true); // have coverage
     }
   }
-  return std::make_tuple(std::vector<uint32_t>(0), false);
+
+   bool hasCoverage = true;
+  for (int i = 0; i < handoff_tp.size(); i++) {
+    if (handoff_tp[i] <= currentTp && entering_tp[i] + gracePeriod > currentTp) {
+      hasCoverage = false;
+      break;
+    }
+  }
+
+  return std::make_tuple(std::vector<uint32_t>(0), false, hasCoverage);
 
   // // if the station is getting far from Access Point/Base Station
   // // pre-send an Interest with seq = seqJustSent + 5

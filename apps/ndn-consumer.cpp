@@ -63,7 +63,7 @@ Consumer::GetTypeId(void)
     .AddAttribute("Prefix", "Name of the Interest", StringValue("/"),
                   MakeNameAccessor(&Consumer::m_interestName), MakeNameChecker())
 
-    .AddAttribute("LifeTime", "LifeTime for interest packet", StringValue("2s"),
+    .AddAttribute("LifeTime", "LifeTime for interest packet", StringValue("4s"),
                   MakeTimeAccessor(&Consumer::m_interestLifeTime), MakeTimeChecker())
 
     .AddAttribute("Step1", "Application support to step1", BooleanValue(false),
@@ -80,7 +80,7 @@ Consumer::GetTypeId(void)
 
     .AddAttribute("RetxTimer",
                   "Timeout defining how frequent retransmission timeouts should be checked",
-                  StringValue("50ms"),
+                  StringValue("500ms"),
                   MakeTimeAccessor(&Consumer::GetRetxTimer, &Consumer::SetRetxTimer),
                   MakeTimeChecker())
 
@@ -235,7 +235,7 @@ Consumer::SendPrefetchInterest(uint32_t seq)
   shared_ptr<Interest> interest = make_shared<Interest>();
   interest->setNonce(m_rand->GetValue(0, std::numeric_limits<uint32_t>::max()));
   interest->setName(*nameWithSequence);
-  time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
+  time::milliseconds interestLifeTime(4000);
   interest->setInterestLifetime(interestLifeTime);
 
   m_transmittedInterests(interest, this, m_face);
@@ -264,7 +264,7 @@ Consumer::SendBundledInterest(int seq1, int seq2) {
 }
 
 void
-Consumer::SendPacket()
+Consumer::SendPacket(int frequency)
 {
   if (!m_active)
     return;
@@ -293,6 +293,7 @@ Consumer::SendPacket()
   ///////////////////////////////////////////
   //          Start of Algorithm           //
   ///////////////////////////////////////////
+  bool hasCoverage = false;
   if (m_step1 == true) {
     // log the current real rtt vector
     std::string rtt_str = "[";
@@ -304,7 +305,7 @@ Consumer::SendPacket()
 
     std::vector<uint32_t> pre_fetch_seq;
     bool dumpRtxQueue = false;
-    std::tie(pre_fetch_seq, dumpRtxQueue) = ns3::moreInterestsToSend(m_seq, traffic_info, this->apCounter);
+    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, this->apCounter, frequency);
     if (pre_fetch_seq.size() > 0) {
       avoidSeqStart = pre_fetch_seq.front() - 1;
       avoidSeqEnd = pre_fetch_seq.back();
@@ -323,12 +324,15 @@ Consumer::SendPacket()
         SendGeneralInterest(i);
         NS_LOG_INFO("> Recovery Interest for " << i);
       }
+      if (avoidSeqEnd >= m_seq) {
+        m_seq = avoidSeqEnd;
+        seq = m_seq + 1;
+      }
       avoidSeqStart = avoidSeqEnd = 0;
     }
   }
   if (m_step2 == true) {
     // prefetch by one-hop V2V communiaction
-    // v2v prefetch interest: /pretch/bssid/prefix/seq
     // log the current real rtt vector
     std::string rtt_str = "[";
     for (auto entry: traffic_info.real_rtt) {
@@ -339,8 +343,9 @@ Consumer::SendPacket()
 
     std::vector<uint32_t> pre_fetch_seq;
     bool dumpRtxQueue = false;
-    std::tie(pre_fetch_seq, dumpRtxQueue) = ns3::moreInterestsToSend(m_seq, traffic_info, this->apCounter);
+    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, this->apCounter, frequency);
     if (pre_fetch_seq.size() > 0) {
+      NS_LOG_INFO ("CURRENT FREQUENCY: " << frequency);
       avoidSeqStart = pre_fetch_seq.front() - 1;
       avoidSeqEnd = pre_fetch_seq.back();
       NS_LOG_INFO ("SET AVOIDSEQ START: " << avoidSeqStart);
@@ -352,7 +357,7 @@ Consumer::SendPacket()
                   << pre_fetch_seq.front() - 1 << " to " << pre_fetch_seq.back());
     }
 
-    if (dumpRtxQueue) {
+    if (dumpRtxQueue && avoidSeqStart != avoidSeqEnd) {
       NS_LOG_INFO("DumpRtxQueue is true");
       for (int i = avoidSeqStart; i < avoidSeqEnd + 1; i++) {
         SendGeneralInterest(i);
@@ -371,7 +376,7 @@ Consumer::SendPacket()
 
     std::vector<uint32_t> pre_fetch_seq;
     bool dumpRtxQueue = false;
-    std::tie(pre_fetch_seq, dumpRtxQueue) = ns3::moreInterestsToSend(m_seq, traffic_info, this->apCounter);
+    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, this->apCounter, frequency);
     if (pre_fetch_seq.size() > 0) {
       avoidSeqStart = pre_fetch_seq.front() - 1;
       avoidSeqEnd = pre_fetch_seq.back();
@@ -390,13 +395,15 @@ Consumer::SendPacket()
   ///////////////////////////////////////////
 
   if (m_step3 == true) {
-    if (seq <= avoidSeqEnd &&  seq >= avoidSeqStart && avoidSeqStart != 0) {
+    if (seq <= avoidSeqEnd && seq >= avoidSeqStart && avoidSeqStart != 0) {
       SendGeneralInterestToFace257(seq);
       NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
     }
     else {
-      SendGeneralInterest(seq);
-      NS_LOG_INFO("> Interest for " << seq);
+      if (hasCoverage) {
+        SendGeneralInterest(seq);
+        NS_LOG_INFO("> Interest for " << seq);
+      }
     }
   }
   else {
@@ -404,8 +411,10 @@ Consumer::SendPacket()
     // don't send it out because it's already sent
     }
     else {
-      SendGeneralInterest(seq);
-      NS_LOG_INFO("> Interest for " << seq);
+      if (hasCoverage) {
+        SendGeneralInterest(seq);
+        NS_LOG_INFO("> Interest for " << seq);
+      }
     }
   }
 

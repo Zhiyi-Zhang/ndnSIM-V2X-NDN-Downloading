@@ -91,7 +91,7 @@ ConsumerBatches::ScheduleNextPacket()
       delay = m_rtt->RetransmitTimeout();
 
     m_initial = false;
-    m_sendEvent = Simulator::Schedule(delay, &Consumer::SendPacket, this);
+    m_sendEvent = Simulator::Schedule(delay, &Consumer::SendPacket, this, 0);
   }
 }
 
