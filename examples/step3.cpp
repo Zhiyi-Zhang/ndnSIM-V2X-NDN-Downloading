@@ -78,11 +78,13 @@ int main (int argc, char *argv[])
   int range = 90;               // AP ranges
   double endtime = 40.0;
   double speed = (double)(bottomrow*spacing)/endtime; //setting speed to span full sim time
+  string hitRatio = "1.0";
 
   string animFile = "ap-mobility-animation.xml";
 
   CommandLine cmd;
   cmd.AddValue ("animFile", "File Name for Animation Output", animFile);
+  cmd.AddValue("hitRatio", "CS hit ratio", hitRatio);
   cmd.Parse (argc, argv);
 
   ////// Reading file for topology setup
@@ -206,7 +208,7 @@ int main (int argc, char *argv[])
   NS_LOG_INFO("Installing NDN stack");
   ndn::StackHelper ndnHelper;
   //ndnHelper.InstallAll();
-  ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "1000");
+  ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "1000", "HitRatio", hitRatio);
   //ndnHelper.SetDefaultRoutes(true);
   //ndnHelper.SetOldContentStore("ns3::ndn::cs::Nocache");
   // ndnHelper.InstallAll();
@@ -251,7 +253,7 @@ int main (int argc, char *argv[])
   ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   consumerHelper.SetPrefix("/youtube/video001");
   // consumerHelper.SetPrefix("/youtube/prefix");
-  consumerHelper.SetAttribute("Frequency", DoubleValue(10.0));
+  consumerHelper.SetAttribute("Frequency", DoubleValue(20.0));
   consumerHelper.SetAttribute("Step3", BooleanValue(true));
   // consumerHelper.SetAttribute("RetxTimer", );
   consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));

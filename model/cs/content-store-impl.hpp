@@ -31,6 +31,9 @@
 #include "ns3/uinteger.h"
 #include "ns3/string.h"
 
+#include "ns3/random-variable-stream.h"
+#include "ns3/double.h"
+
 #include "../../utils/trie/trie-with-policy.hpp"
 
 namespace ns3 {
@@ -97,7 +100,7 @@ public:
   static TypeId
   GetTypeId();
 
-  ContentStoreImpl(){};
+  ContentStoreImpl();
   virtual ~ContentStoreImpl(){};
 
   // from ContentStore
@@ -147,17 +150,34 @@ private:
   uint32_t
   GetMaxSize() const;
 
+  void
+  SetHitRatio(double hitRatio);
+
+  double
+  GetHitRatio() const;
+
 private:
   static LogComponent g_log; ///< @brief Logging variable
 
   /// @brief trace of for entry additions (fired every time entry is successfully added to the
   /// cache): first parameter is pointer to the CS entry
   TracedCallback<Ptr<const Entry>> m_didAddEntry;
+
+  double m_hitRatio;
+  Ptr<RandomVariableStream> m_random;
 };
 
 //////////////////////////////////////////
 ////////// Implementation ////////////////
 //////////////////////////////////////////
+
+template<class Policy>
+ContentStoreImpl<Policy>::ContentStoreImpl()
+{
+  m_random = CreateObject<UniformRandomVariable>();
+  m_random->SetAttribute("Min", DoubleValue(0.0));
+  m_random->SetAttribute("Max", DoubleValue(1.0));
+}
 
 template<class Policy>
 LogComponent ContentStoreImpl<Policy>::g_log = LogComponent(("ndn.cs." + Policy::GetName()).c_str(), __FILE__);
@@ -176,6 +196,11 @@ ContentStoreImpl<Policy>::GetTypeId()
                     StringValue("100"), MakeUintegerAccessor(&ContentStoreImpl<Policy>::GetMaxSize,
                                                              &ContentStoreImpl<Policy>::SetMaxSize),
                     MakeUintegerChecker<uint32_t>())
+      .AddAttribute("HitRatio",
+                    "Simulate cache replacement",
+                    DoubleValue(1.0), MakeDoubleAccessor(&ContentStoreImpl<Policy>::GetHitRatio,
+                                                           &ContentStoreImpl<Policy>::SetHitRatio),
+                    MakeDoubleChecker<double>(0.0, 1.0))
 
       .AddTraceSource("DidAddEntry",
                       "Trace fired every time entry is successfully added to the cache",
@@ -216,7 +241,8 @@ ContentStoreImpl<Policy>::Lookup(shared_ptr<const Interest> interest)
                                                     isNotExcluded(interest->getExclude()));
   }
 
-  if (node != this->end()) {
+  bool hit = (m_random->GetValue() < m_hitRatio);
+  if (node != this->end() && hit) {
     this->m_cacheHitsTrace(interest, node->payload()->GetData());
 
     shared_ptr<Data> copy = make_shared<Data>(*node->payload()->GetData());
@@ -283,6 +309,20 @@ uint32_t
 ContentStoreImpl<Policy>::GetSize() const
 {
   return this->getPolicy().size();
+}
+
+template<class Policy>
+void
+ContentStoreImpl<Policy>::SetHitRatio(double hitRatio)
+{
+  m_hitRatio = hitRatio;
+}
+
+template<class Policy>
+double
+ContentStoreImpl<Policy>::GetHitRatio() const
+{
+  return m_hitRatio;
 }
 
 template<class Policy>
