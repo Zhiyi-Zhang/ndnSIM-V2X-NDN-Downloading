@@ -1,5 +1,5 @@
 # Read Raw Data
-rawData <- readLines("../../log0.txt")
+rawData <- readLines("full.txt")
 options(scipen=999)
 
 # Extract Data Data
@@ -11,7 +11,7 @@ for (i in 1:length(dataData)) {
 }
 
 # Extract Interest Data
-interestPattern <- "^\\+([.0-9]*).*Interest for ([0-9]*)$"
+interestPattern <- "^\\+([.0-9]*).*Interest for ([0-9]*).*$"
 interestData <- regmatches(rawData, gregexpr(interestPattern, rawData))
 interestData <- interestData[grep(interestPattern, interestData)]
 for (i in 1:length(interestData)) {
@@ -56,26 +56,36 @@ for (i in 1:length(dataData)) {
 
 # show plot
 plot(df$rtt[1:350], xlab="Data ID", ylab="Round-Trip Time")
-plot(df$hopcount[1:350], xlab="Data ID", ylab="Hop Number")
-rttsum <- summary(df$rtt[1:350])
+pdf("full-hop-count.pdf",width=7,height=4) 
+par(mar=c(4,4,4,4))
+plot(df$hopcount[1:350], 
+     xlab="Target Data ID", ylab="Hop Number", 
+     ylim = c(1, 6),
+     pch = 1, cex=0.5)
+dev.off()
+rttsum <- summary(df$rtt[1:100])
 
 # packets received per sencod
-df2 <- data.frame(second = numeric(50),
-                  packetNum = numeric(50),
+scale <- 0.2
+table_row <- 40/scale
+df2 <- data.frame(second = numeric(table_row),
+                  packetNum = numeric(table_row),
                   stringsAsFactors = FALSE)
-for (i in 1:50) {
-  df2$second[i] <- i
+for (i in 1:table_row) {
+  df2$second[i] <- i*scale
   counter <- 0
-  for (j in 1:length(dataData)) {
-    item <- strsplit(as.character(dataData[j]), " ")
-    recieveTime <- as.numeric(item[[1]][1])
-    if (recieveTime <= i && recieveTime > i - 1) {
+  for (j in 1:nrow(df)) {
+    recieveTime <- df$recieving[j]
+    if (recieveTime <= i*scale && recieveTime > (i - 1)*scale ) {
       counter <- counter + 1
-    }
-    if (recieveTime > i) {
-      break
     }
   }
   df2$packetNum[i] <- counter
 }
-plot(df2$packetNum[1:50], xlab="Time", ylab="Downloading Rate", type="o", col="blue")
+pdf("full-downloading.pdf",width=7,height=4)
+par(mar=c(4,4,4,4))
+plot(df2$second[1:table_row], df2$packetNum[1:table_row]*(1/scale), 
+     xlab="Time", ylab="Downloading Speed (Pkts/s)",
+     ylim = c(0, 40),
+     type="l", col="blue", cex=0.5, mar=c(0,0,0,0))
+dev.off()
