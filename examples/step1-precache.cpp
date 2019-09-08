@@ -78,13 +78,20 @@ int main (int argc, char *argv[])
   int range = 90;               // AP ranges
   double endtime = 40.0;
   double speed = (double)(bottomrow*spacing)/endtime; //setting speed to span full sim time
+  double downRate = 20.0;
   string hitRatio = "1.0";
+  string downRateStr = "";
 
   string animFile = "ap-mobility-animation.xml";
 
   CommandLine cmd;
   cmd.AddValue ("animFile", "File Name for Animation Output", animFile);
+  cmd.AddValue("hitRatio", "CS hit ratio", hitRatio);
+  cmd.AddValue("downRate", "Downloading ratio, pkt/s", downRateStr);
   cmd.Parse (argc, argv);
+  if (downRateStr.length() > 0) {
+    downRate = std::stod(downRateStr);
+  }
 
   ////// Reading file for topology setup
   AnnotatedTopologyReader topologyReader("", 1);
@@ -248,7 +255,7 @@ int main (int argc, char *argv[])
   ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   consumerHelper.SetPrefix("/youtube/video001");
   // consumerHelper.SetPrefix("/youtube/prefix");
-  consumerHelper.SetAttribute("Frequency", DoubleValue(20.0));
+  consumerHelper.SetAttribute("Frequency", DoubleValue(downRate));
   consumerHelper.SetAttribute("Step1", BooleanValue(true));
   // consumerHelper.SetAttribute("RetxTimer", );
   consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));

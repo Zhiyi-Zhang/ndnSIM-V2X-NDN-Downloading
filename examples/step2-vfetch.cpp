@@ -78,14 +78,20 @@ int main (int argc, char *argv[])
   int range = 90;               // AP ranges
   double endtime = 40.0;
   double speed = (double)(bottomrow*spacing)/endtime; //setting speed to span full sim time
+  double downRate = 20.0;
   string hitRatio = "1.0";
+  string downRateStr = "";
 
   string animFile = "ap-mobility-animation.xml";
 
   CommandLine cmd;
   cmd.AddValue ("animFile", "File Name for Animation Output", animFile);
   cmd.AddValue("hitRatio", "CS hit ratio", hitRatio);
+  cmd.AddValue("downRate", "Downloading ratio, pkt/s", downRateStr);
   cmd.Parse (argc, argv);
+  if (downRateStr.length() > 0) {
+    downRate = std::stod(downRateStr);
+  }
 
   ////// Reading file for topology setup
   AnnotatedTopologyReader topologyReader("", 1);
@@ -212,23 +218,21 @@ int main (int argc, char *argv[])
   //ndnHelper.SetDefaultRoutes(true);
   //ndnHelper.SetOldContentStore("ns3::ndn::cs::Nocache");
   // ndnHelper.InstallAll();
-  ndnHelper.Install(Names::Find<Node>("root"));
   ndnHelper.Install(Names::Find<Node>("ap1"));
   ndnHelper.Install(Names::Find<Node>("ap2"));
   ndnHelper.Install(Names::Find<Node>("ap3"));
   ndnHelper.Install(Names::Find<Node>("ap4"));
   ndnHelper.Install(Names::Find<Node>("ap5"));
   ndnHelper.Install(Names::Find<Node>("ap6"));
+  ndnHelper.SetOldContentStore("ns3::ndn::cs::Nocache");
+  ndnHelper.Install(Names::Find<Node>("root"));
   ndnHelper.Install(Names::Find<Node>("r1"));
   ndnHelper.Install(Names::Find<Node>("r2"));
   ndnHelper.Install(Names::Find<Node>("r3"));
   ndnHelper.Install(Names::Find<Node>("r4"));
   ndnHelper.Install(Names::Find<Node>("r5"));
   ndnHelper.Install(Names::Find<Node>("r6"));
-
-  ndn::StackHelper ndnHelper1;
-  ndnHelper1.SetOldContentStore("ns3::ndn::cs::Nocache");
-  ndnHelper1.Install(consumers);
+  ndnHelper.Install(consumers);
 
   // Choosing forwarding strategy
   ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/multicast");
@@ -256,7 +260,7 @@ int main (int argc, char *argv[])
   ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   consumerHelper.SetPrefix("/youtube/video001");
   // consumerHelper.SetPrefix("/youtube/prefix");
-  consumerHelper.SetAttribute("Frequency", DoubleValue(20.0));
+  consumerHelper.SetAttribute("Frequency", DoubleValue(downRate));
   consumerHelper.SetAttribute("Step2", BooleanValue(true));
   // consumerHelper.SetAttribute("RetxTimer", );
   consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));

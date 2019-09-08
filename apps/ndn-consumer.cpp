@@ -293,7 +293,7 @@ Consumer::SendPacket(int frequency)
   ///////////////////////////////////////////
   //          Start of Algorithm           //
   ///////////////////////////////////////////
-  bool hasCoverage = false;
+  bool hasCoverage = true;
   if (m_step1 == true) {
     // log the current real rtt vector
     std::string rtt_str = "[";
@@ -318,7 +318,7 @@ Consumer::SendPacket(int frequency)
         NS_LOG_INFO("> Pre-Fetch Interest for " << pre_seq);
       }
     }
-    if (dumpRtxQueue) {
+    if (dumpRtxQueue && avoidSeqStart != avoidSeqEnd) {
       NS_LOG_INFO("DumpRtxQueue is true");
       for (int i = avoidSeqStart; i < avoidSeqEnd + 1; i++) {
         SendGeneralInterest(i);
@@ -363,6 +363,10 @@ Consumer::SendPacket(int frequency)
         SendGeneralInterest(i);
         NS_LOG_INFO("> Recovery Interest for " << i);
       }
+      if (avoidSeqEnd >= m_seq) {
+        m_seq = avoidSeqEnd;
+        seq = m_seq + 1;
+      }
       avoidSeqStart = avoidSeqEnd = 0;
     }
   }
@@ -383,7 +387,6 @@ Consumer::SendPacket(int frequency)
       NS_LOG_INFO ("SET AVOIDSEQ START: " << avoidSeqStart);
       NS_LOG_INFO ("SET AVOIDSEQ END: " << avoidSeqEnd);
     }
-
     if (dumpRtxQueue) {
       NS_LOG_INFO("DumpRtxQueue is true");
       avoidSeqStart = avoidSeqEnd = 0;
@@ -400,10 +403,8 @@ Consumer::SendPacket(int frequency)
       NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
     }
     else {
-      if (hasCoverage) {
-        SendGeneralInterest(seq);
-        NS_LOG_INFO("> Interest for " << seq);
-      }
+      SendGeneralInterest(seq);
+      NS_LOG_INFO("> Interest for " << seq);
     }
   }
   else {

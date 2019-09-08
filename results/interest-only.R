@@ -1,5 +1,5 @@
 # Read Raw Data
-rawData <- readLines("interest-only-20.txt")
+rawData <- readLines("interest-only.txt")
 options(scipen=999)
 
 # Extract Data Data
@@ -91,7 +91,7 @@ for (i in 1:length(dataData)) {
 }
 
 # show plot
-plot(df$rtt[1:nrow(df)], xlab="Data ID", ylab="Round-Trip Time")
+#plot(df$rtt[1:nrow(df)], xlab="Data ID", ylab="Round-Trip Time")
 pdf("interest-only-hop-count.pdf",width=7,height=4) 
 par(mar=c(4,4,4,4))
 plot(df$hopcount[1:nrow(df)], 
@@ -102,7 +102,7 @@ dev.off()
 rttsum <- summary(df$rtt[1:100])
 
 # packets received per sencod
-scale <- 0.3
+scale <- 0.2
 table_row <- 40/scale
 df2 <- data.frame(second = numeric(table_row),
                   packetNum = numeric(table_row),
@@ -122,7 +122,7 @@ pdf("interest-only-downloading.pdf",width=7,height=4)
 par(mar=c(4,4,4,4))
 plot(df2$second[1:table_row], df2$packetNum[1:table_row]*(1/scale), 
      xlab="Time", ylab="Downloading Speed (Pkts/s)",
-     ylim = c(0, 100),
+     ylim = c(0, 80),
      type="l", col="blue", cex=0.5, mar=c(0,0,0,0))
 dev.off()
 

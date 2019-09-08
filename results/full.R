@@ -55,10 +55,10 @@ for (i in 1:length(dataData)) {
 }
 
 # show plot
-plot(df$rtt[1:350], xlab="Data ID", ylab="Round-Trip Time")
+# plot(df$rtt[1:350], xlab="Data ID", ylab="Round-Trip Time")
 pdf("full-hop-count.pdf",width=7,height=4) 
 par(mar=c(4,4,4,4))
-plot(df$hopcount[1:350], 
+plot(df$hopcount[1:nrow(df)], 
      xlab="Target Data ID", ylab="Hop Number", 
      ylim = c(1, 6),
      pch = 1, cex=0.5)
@@ -86,6 +86,6 @@ pdf("full-downloading.pdf",width=7,height=4)
 par(mar=c(4,4,4,4))
 plot(df2$second[1:table_row], df2$packetNum[1:table_row]*(1/scale), 
      xlab="Time", ylab="Downloading Speed (Pkts/s)",
-     ylim = c(0, 40),
+     ylim = c(0, 80),
      type="l", col="blue", cex=0.5, mar=c(0,0,0,0))
 dev.off()
