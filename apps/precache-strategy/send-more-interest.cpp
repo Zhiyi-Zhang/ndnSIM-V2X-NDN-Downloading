@@ -30,7 +30,7 @@ const int64_t wifilessInterval = 333333333*2; /*0.333s*2*/
 
 
 const int64_t thresholdAfterEnteringAP = 50000000; /*0.050s*/
-const int64_t gracePeriod = 350000000; // 0.32s
+const int64_t gracePeriod = 350000000; // 0.35s
 
 
 /**

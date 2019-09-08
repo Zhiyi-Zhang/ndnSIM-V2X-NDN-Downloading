@@ -1,5 +1,5 @@
 # Read Raw Data
-rawData <- readLines("interest-only.txt")
+rawData <- readLines("interest-only-0.5.txt")
 options(scipen=999)
 
 # Extract Data Data
@@ -139,18 +139,18 @@ deltaTime <- function(startIndex, endIndex) {
       break
     }
   }
-  latestRecievingTime <- 0
+  totalTime <- 0
+  count <- 0
   for (i in 1:length(dataData)) {
     item <- strsplit(as.character(dataData[i]), " ")
     index <- as.numeric(item[[1]][2])
     recieveTime <- as.numeric(item[[1]][1])
     if (index >= startIndex && index <= endIndex) {
-      if (recieveTime > latestRecievingTime) {
-        latestRecievingTime = recieveTime
-      }
+      totalTime <- totalTime + recieveTime
+      count <- count + 1
     }
   }
-  return(latestRecievingTime - sendingTime)
+  return(totalTime/count - sendingTime)
 }
 
 s1 <- 0
