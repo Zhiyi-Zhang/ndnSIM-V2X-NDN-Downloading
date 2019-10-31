@@ -11,22 +11,22 @@
 
 namespace ns3 {
 
-const std::vector<int64_t> handoff_tp = {3166666666*2/*3.166s*2, 190m, AP1*/,
-                                         6500000000*2/*6.5s*2, 390m, AP2*/,
-                                         9833333333*2/*9.833s*2, 590m, AP3*/,
-                                         13166666666*2/*9.833s*2, 790m, AP4*/,
-                                         16500000000*2/*16.5s*2, 990m, AP5*/,
-                                         19833333333*2/*19.833s*2, 1190m, AP6*/};
+const std::vector<int64_t> handoff_tp = {8 * 1000000000 /*160m, AP1*/,
+                                         18 * 1000000000 /*360m, AP2*/,
+                                         28 * 1000000000 /*9.833s*2, 590m, AP3*/,
+                                         38 * 1000000000 /*9.833s*2, 790m, AP4*/,
+                                         48 * 1000000000 /*16.5s*2, 990m, AP5*/,
+                                         58 * 1000000000 /*19.833s*2, 1190m, AP6*/};
 
-const std::vector<int64_t> entering_tp = {7000000000/*7, 210m, AP1*/,
-                                          13666666666/*13.6, 410m, AP2*/,
-                                          20333333333/*20.3, 610m, AP3*/,
-                                          27000000000/*27, 810m, AP4*/,
-                                          33666666666/*33.6, 1010m, AP5*/,
-                                          40333333333/*19.833s*2, 1210m, AP6*/};
+const std::vector<int64_t> entering_tp = {2 * 1000000000 /*40m, AP1*/,
+                                          12 * 1000000000 /*240m, AP2*/,
+                                          22 * 1000000000 /*440m, AP3*/,
+                                          32 * 1000000000 /*640m, AP4*/,
+                                          42 * 1000000000 /*840m, AP5*/,
+                                          52 * 1000000000/*1040m, AP6*/};
 
 // the time interval between two APs when there is no wifi connection
-const int64_t wifilessInterval = 333333333*2; /*0.333s*2*/
+const int64_t wifiLessInterval = 4 * 1000000000;
 
 
 const int64_t thresholdAfterEnteringAP = 50000000; /*0.050s*/

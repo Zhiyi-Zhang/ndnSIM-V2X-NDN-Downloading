@@ -75,9 +75,10 @@ int main (int argc, char *argv[])
 
   int bottomrow = 6;            // number of AP nodes
   int spacing = 200;            // between bottom-row nodes
-  int range = 90;               // AP ranges
-  double endtime = 40.0;
-  double speed = (double)(bottomrow*spacing)/endtime; //setting speed to span full sim time
+  int range = 60;               // AP ranges
+  int v2vRange = 40;
+  double endtime = 60.0;
+  double speed = (double)15; //setting speed to span full sim time
   double downRate = 20.0;
   string hitRatio = "1.0";
   string downRateStr = "";
@@ -168,7 +169,7 @@ int main (int argc, char *argv[])
   YansWifiChannelHelper wifiChannel2;// = YansWifiChannelHelper::Default ();
   wifiChannel2.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
   wifiChannel2.AddPropagationLoss ("ns3::RangePropagationLossModel",
-                                  "MaxRange", DoubleValue(range));
+                                  "MaxRange", DoubleValue(v2vRange));
   YansWifiPhyHelper wifiPhy2 = YansWifiPhyHelper::Default ();
   wifiPhy2.SetChannel (wifiChannel.Create ());
   NqosWifiMacHelper wifiMac2 = NqosWifiMacHelper::Default ();
