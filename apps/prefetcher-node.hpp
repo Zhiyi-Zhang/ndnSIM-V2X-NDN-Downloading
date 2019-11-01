@@ -94,7 +94,7 @@ class PrefetcherNode {
                           [](const Interest&, const lp::Nack&) {},
                           [](const Interest&) {});
     retx_timer[seq] = scheduler_.scheduleEvent(kInterestLifetime, [this, seq] {
-      // NS_LOG_INFO( "node(" << nid_ << ") Retx Timeout for " << seq );
+      NS_LOG_INFO( "node(" << nid_ << ") Retx Timeout for " << seq );
       // SendInterest(seq);
       // do nothing
     });

@@ -78,7 +78,7 @@ int main (int argc, char *argv[])
   int range = 60;               // AP ranges
   int v2vRange = 40;
   double endtime = 60.0;
-  double speed = (double)15; //setting speed to span full sim time
+  double speed = (double)20; //setting speed to span full sim time
   double downRate = 20.0;
   string hitRatio = "1.0";
   string downRateStr = "";
@@ -264,7 +264,7 @@ int main (int argc, char *argv[])
   consumerHelper.SetAttribute("Frequency", DoubleValue(downRate));
   consumerHelper.SetAttribute("Step2", BooleanValue(true));
   // consumerHelper.SetAttribute("RetxTimer", );
-  consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.0));
+  consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));
   // consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.0));
 
   // Prefetcher Helpers
@@ -272,7 +272,7 @@ int main (int argc, char *argv[])
     ndn::AppHelper prefetcherHelper("PrefetcherApp");
     prefetcherHelper.SetAttribute("NodeID", UintegerValue(i));
     prefetcherHelper.SetAttribute("Prefix", StringValue("/youtube/video001"));
-    prefetcherHelper.Install(consumers.Get(i)).Start(Seconds(0.0));
+    prefetcherHelper.Install(consumers.Get(i)).Start(Seconds(0.1));
   }
 
   for (auto consumer: consumers) {
