@@ -66,7 +66,7 @@ class PrefetcherNode {
     auto n = interest.getName();
     prefetchInterestName = n;
     NS_LOG_INFO( "node(" << nid_ << ") receives the pretch interest: " << n.toUri() );
-    assert(retx_timer.empty());
+    // assert(retx_timer.empty());
 
     // one-hop V2V communication
     // interest: /prefetch/prefix_/seq/[last-ap], prefix_ = /youtube/video00
@@ -88,14 +88,15 @@ class PrefetcherNode {
   }
 
   void SendInterest(uint32_t seq) {
-    auto real_interest_name = Name(prefix_).appendSequenceNumber(seq);
+    auto real_interest_name = Name(prefix_).append(std::to_string(seq)).appendSequenceNumber(seq);
     Interest preInterest(real_interest_name, kInterestLifetime);
     face_.expressInterest(preInterest, std::bind(&PrefetcherNode::OnRemoteData, this, _2),
                           [](const Interest&, const lp::Nack&) {},
                           [](const Interest&) {});
     retx_timer[seq] = scheduler_.scheduleEvent(kInterestLifetime, [this, seq] {
-      NS_LOG_INFO( "node(" << nid_ << ") Retx Timeout for " << seq );
-      SendInterest(seq); 
+      // NS_LOG_INFO( "node(" << nid_ << ") Retx Timeout for " << seq );
+      // SendInterest(seq);
+      // do nothing
     });
     NS_LOG_INFO( "node(" << nid_ << ") send out Interest for " << seq );
   }

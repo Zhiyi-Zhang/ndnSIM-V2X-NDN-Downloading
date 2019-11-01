@@ -11,25 +11,25 @@
 
 namespace ns3 {
 
-const std::vector<int64_t> handoff_tp = {8 * 1000000000 /*160m, AP1*/,
-                                         18 * 1000000000 /*360m, AP2*/,
-                                         28 * 1000000000 /*9.833s*2, 590m, AP3*/,
-                                         38 * 1000000000 /*9.833s*2, 790m, AP4*/,
-                                         48 * 1000000000 /*16.5s*2, 990m, AP5*/,
-                                         58 * 1000000000 /*19.833s*2, 1190m, AP6*/};
+const std::vector<int64_t> handoff_tp = {8 * (uint64_t)1000000000 /*160m, AP1*/,
+                                         18 * (uint64_t)1000000000 /*360m, AP2*/,
+                                         28 * (uint64_t)1000000000 /*9.833s*2, 590m, AP3*/,
+                                         38 * (uint64_t)1000000000 /*9.833s*2, 790m, AP4*/,
+                                         48 * (uint64_t)1000000000 /*16.5s*2, 990m, AP5*/,
+                                         58 * (uint64_t)1000000000 /*19.833s*2, 1190m, AP6*/};
 
-const std::vector<int64_t> entering_tp = {2 * 1000000000 /*40m, AP1*/,
-                                          12 * 1000000000 /*240m, AP2*/,
-                                          22 * 1000000000 /*440m, AP3*/,
-                                          32 * 1000000000 /*640m, AP4*/,
-                                          42 * 1000000000 /*840m, AP5*/,
-                                          52 * 1000000000/*1040m, AP6*/};
+const std::vector<int64_t> entering_tp = {2 * (uint64_t)1000000000 /*40m, AP1*/,
+                                          12 * (uint64_t)1000000000 /*240m, AP2*/,
+                                          22 * (uint64_t)1000000000 /*440m, AP3*/,
+                                          32 * (uint64_t)1000000000 /*640m, AP4*/,
+                                          42 * (uint64_t)1000000000 /*840m, AP5*/,
+                                          52 * (uint64_t)1000000000/*1040m, AP6*/};
 
 // the time interval between two APs when there is no wifi connection
-const int64_t wifiLessInterval = 4 * 1000000000;
+const int64_t wifiLessInterval = 4 * (uint64_t)1000000000;
 
 
-const int64_t thresholdAfterEnteringAP = 50000000; /*0.050s*/
+const int64_t thresholdAfterEnteringAP = 0.8 * (uint64_t)1000000000; /*0.08s*/
 const int64_t gracePeriod = 350000000; // 0.35s
 
 
@@ -43,8 +43,20 @@ const int64_t gracePeriod = 350000000; // 0.35s
 std::tuple<std::vector<uint32_t>, bool/*recover?*/, bool/*has coverage?*/>
 moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficInfo, int& apCounter, int frequency)
 {
+  uint64_t currentTp = ns3::Simulator::Now().GetNanoSeconds();
+  bool hasCoverage = true;
+  for (int i = 0; i < handoff_tp.size(); i++) {
+    if (handoff_tp[i] <= currentTp && entering_tp[i] + gracePeriod > currentTp) {
+      hasCoverage = false;
+      break;
+    }
+  }
+  if (currentTp <= entering_tp[0] || currentTp >= handoff_tp[handoff_tp.size() - 1]) {
+    hasCoverage = false;
+  }
+
   if (trafficInfo.real_rtt.size() < 2)
-    return std::make_tuple(std::vector<uint32_t>(0), false, true);
+    return std::make_tuple(std::vector<uint32_t>(0), false, hasCoverage);
 
   // ordinary least squares of line regression
   double sumX = 0;
@@ -71,10 +83,9 @@ moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo traffi
 
   // new algorithm under new assumption
   // before leaving
-  uint64_t currentTp = ns3::Simulator::Now().GetNanoSeconds();
   double threshold = aveY;
   for (int i = 0; i < handoff_tp.size(); i++) {
-    if (handoff_tp[i] > currentTp && handoff_tp[i] - currentTp <= threshold) {
+    if (currentTp < handoff_tp[i] && handoff_tp[i] - currentTp <= threshold) {
       if (apCounter >= i + 1) {
         // already prefetch for this AP
         break;
@@ -82,30 +93,21 @@ moreInterestsToSend(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo traffi
 
       std::vector<uint32_t> result;
       int insideNumber = static_cast<int>(threshold / 1000000000.0 * frequency);
-      int outsideNumber = static_cast<int>((wifilessInterval + gracePeriod) / 1000000000.0 * frequency);
+      int outsideNumber = static_cast<int>((wifiLessInterval + gracePeriod) / 1000000000.0 * frequency);
       for (int j = 0; j < insideNumber + outsideNumber + 1; j++) {
         result.push_back(seqJustSent + j);
       }
       apCounter++;
-      return std::make_tuple(result, false, true); // still have coverage
+      return std::make_tuple(result, false, hasCoverage); // still have coverage
     }
   }
 
   // after arriving
   for (int i = 0; i < entering_tp.size(); i++) {
     if (currentTp > entering_tp[i] + gracePeriod && currentTp - entering_tp[i] - gracePeriod <= thresholdAfterEnteringAP) {
-      return std::make_tuple(std::vector<uint32_t>(0), true, true); // have coverage
+      return std::make_tuple(std::vector<uint32_t>(0), true, hasCoverage); // have coverage
     }
   }
-
-   bool hasCoverage = true;
-  for (int i = 0; i < handoff_tp.size(); i++) {
-    if (handoff_tp[i] <= currentTp && entering_tp[i] + gracePeriod > currentTp) {
-      hasCoverage = false;
-      break;
-    }
-  }
-
   return std::make_tuple(std::vector<uint32_t>(0), false, hasCoverage);
 
   // // if the station is getting far from Access Point/Base Station
@@ -159,7 +161,7 @@ oneHopV2VPrefetch(uint32_t seqJustSent, ns3::ndn::Consumer::TrafficInfo trafficI
 
       std::vector<uint32_t> result;
       int insideNumber = static_cast<int>(threshold / 100000000);
-      int outsideNumber = static_cast<int>(wifilessInterval / 100000000);
+      int outsideNumber = static_cast<int>(wifiLessInterval / 100000000);
       for (int j = 0; j < insideNumber + outsideNumber + 1; j++) {
         result.push_back(seqJustSent + j);
       }

@@ -205,7 +205,7 @@ int main (int argc, char *argv[])
     Vector vel(speed, 0, 0);
     cvmm->SetPosition(pos);
     cvmm->SetVelocity(vel);
-    nxt += 80;
+    nxt += 20;
   }
 
   // std::cout << "position: " << cvmm->GetPosition() << " velocity: " << cvmm->GetVelocity() << std::endl;
@@ -264,7 +264,7 @@ int main (int argc, char *argv[])
   consumerHelper.SetAttribute("Frequency", DoubleValue(downRate));
   consumerHelper.SetAttribute("Step2", BooleanValue(true));
   // consumerHelper.SetAttribute("RetxTimer", );
-  consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));
+  consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.0));
   // consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.0));
 
   // Prefetcher Helpers
@@ -272,7 +272,7 @@ int main (int argc, char *argv[])
     ndn::AppHelper prefetcherHelper("PrefetcherApp");
     prefetcherHelper.SetAttribute("NodeID", UintegerValue(i));
     prefetcherHelper.SetAttribute("Prefix", StringValue("/youtube/video001"));
-    prefetcherHelper.Install(consumers.Get(i)).Start(Seconds(0.1));
+    prefetcherHelper.Install(consumers.Get(i)).Start(Seconds(0.0));
   }
 
   for (auto consumer: consumers) {
