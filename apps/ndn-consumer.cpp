@@ -106,7 +106,6 @@ Consumer::Consumer()
   NS_LOG_FUNCTION_NOARGS();
 
   m_rtt = CreateObject<RttMeanDeviation>();
-  apCounter = 0;
   avoidSeqStart = avoidSeqEnd = 0;
 }
 
@@ -309,19 +308,19 @@ Consumer::SendPacket(int frequency)
 
     std::vector<uint32_t> pre_fetch_seq;
     bool dumpRtxQueue = false;
-    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, this->apCounter, frequency);
+    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, frequency);
     NS_LOG_INFO ("ALGO RESULT: " << pre_fetch_seq.size() << " " << dumpRtxQueue << " "  << hasCoverage);
     if (pre_fetch_seq.size() > 0) {
       NS_LOG_INFO ("CURRENT FREQUENCY: " << frequency);
-      avoidSeqStart = pre_fetch_seq.front() - 1;
+      avoidSeqStart = pre_fetch_seq.front();
       avoidSeqEnd = pre_fetch_seq.back();
       NS_LOG_INFO ("SET AVOIDSEQ START: " << avoidSeqStart);
       NS_LOG_INFO ("SET AVOIDSEQ END: " << avoidSeqEnd);
 
       // /prefetch/prefix/seq1/seq2/ap
-      SendBundledInterest(pre_fetch_seq.front() - 1, pre_fetch_seq.back());
+      SendBundledInterest(pre_fetch_seq.front(), pre_fetch_seq.back());
       NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication for "
-                  << pre_fetch_seq.front() - 1 << " to " << pre_fetch_seq.back());
+                  << pre_fetch_seq.front() << " to " << pre_fetch_seq.back());
     }
 
     if (dumpRtxQueue && avoidSeqStart != avoidSeqEnd) {
@@ -347,7 +346,7 @@ Consumer::SendPacket(int frequency)
 
     std::vector<uint32_t> pre_fetch_seq;
     bool dumpRtxQueue = false;
-    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, this->apCounter, frequency);
+    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, frequency);
     if (pre_fetch_seq.size() > 0) {
       avoidSeqStart = pre_fetch_seq.front() - 1;
       avoidSeqEnd = pre_fetch_seq.back();

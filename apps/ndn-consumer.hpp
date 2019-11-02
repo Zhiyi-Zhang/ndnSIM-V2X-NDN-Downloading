@@ -116,7 +116,6 @@ public:
     std::deque<int64_t> retx_time;
   };
 
-  int apCounter;
   int avoidSeqStart;
   int avoidSeqEnd;
 
