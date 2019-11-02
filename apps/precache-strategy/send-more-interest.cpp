@@ -97,7 +97,7 @@ moreInterestsToSend(uint32_t seqAboutToSend, ns3::ndn::Consumer::TrafficInfo tra
       std::vector<uint32_t> result;
       int seqs_before_next_ap = static_cast<int>((threshold + not_real_coverage_period) / 1000000000.0 * frequency);
       for (int i = seq_not_sent_yet_start; i <= seqAboutToSend + seqs_before_next_ap; i++) {
-        result.push_back(seq_not_sent_yet_start + i);
+        result.push_back(i);
       }
       prefetch_ap_counter++;
       return std::make_tuple(result, false, hasCoverage);

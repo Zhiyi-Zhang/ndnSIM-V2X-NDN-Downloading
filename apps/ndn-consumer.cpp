@@ -380,14 +380,19 @@ Consumer::SendPacket(int frequency)
         SendGeneralInterest(seq);
         NS_LOG_INFO("> Interest for " << seq);
         if (avoidSeqStart < avoidSeqEnd) {
-          for (int i = avoidSeqStart; i <= std::min(avoidSeqStart + 10, avoidSeqEnd); i++) {
+          // for (int i = avoidSeqStart; i <= std::min(avoidSeqStart + 10, avoidSeqEnd); i++) {
+          //   SendGeneralInterest(i);
+          //   NS_LOG_INFO("> Recovery Interest for " << i);
+          // }
+          // avoidSeqStart += std::min(10, avoidSeqEnd - avoidSeqStart);
+          // if (avoidSeqStart >= avoidSeqEnd) {
+          //   avoidSeqStart = avoidSeqEnd = 0;
+          // }
+          for (int i = avoidSeqStart; i <= avoidSeqEnd; i++) {
             SendGeneralInterest(i);
             NS_LOG_INFO("> Recovery Interest for " << i);
           }
-          avoidSeqStart += std::min(10, avoidSeqEnd - avoidSeqStart);
-          if (avoidSeqStart >= avoidSeqEnd) {
-            avoidSeqStart = avoidSeqEnd = 0;
-          }
+          avoidSeqStart = avoidSeqEnd = 0;
         }
       }
     }
