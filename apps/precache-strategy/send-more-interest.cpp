@@ -29,8 +29,7 @@ const std::vector<int64_t> entering_tp = {2 * (uint64_t)1000000000 /*40m, AP1*/,
 const int64_t wifiLessInterval = 4 * (uint64_t)1000000000;
 
 
-const int64_t not_real_coverage_period = 0.8 * (uint64_t)1000000000; /*0.08s*/
-const int64_t gracePeriod = 350000000; // 0.35s
+const int64_t not_real_coverage_period = 0.4 * (uint64_t)1000000000; /*0.08s*/
 const int64_t default_rtt = 500000000;
 static int seq_not_sent_yet_start = 0;
 static int prefetch_ap_counter = 0;
