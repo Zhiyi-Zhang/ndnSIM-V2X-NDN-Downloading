@@ -45,6 +45,8 @@ NS_LOG_COMPONENT_DEFINE("ndn.Consumer");
 namespace ns3 {
 namespace ndn {
 
+static bool startNormalSending = false;
+
 NS_OBJECT_ENSURE_REGISTERED(Consumer);
 
 static const int kRttVectorMaxSize = 5;
@@ -80,7 +82,7 @@ Consumer::GetTypeId(void)
 
     .AddAttribute("RetxTimer",
                   "Timeout defining how frequent retransmission timeouts should be checked",
-                  StringValue("500ms"),
+                  StringValue("2000ms"),
                   MakeTimeAccessor(&Consumer::GetRetxTimer, &Consumer::SetRetxTimer),
                   MakeTimeChecker())
 
@@ -321,19 +323,15 @@ Consumer::SendPacket(int frequency)
       SendBundledInterest(pre_fetch_seq.front(), pre_fetch_seq.back());
       NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication for "
                   << pre_fetch_seq.front() << " to " << pre_fetch_seq.back());
+      startNormalSending = false;
     }
-
     if (dumpRtxQueue && avoidSeqStart != avoidSeqEnd) {
       NS_LOG_INFO("DumpRtxQueue is true");
-      for (int i = avoidSeqStart; i < avoidSeqEnd + 1; i++) {
-        SendGeneralInterest(i);
-        NS_LOG_INFO("> Recovery Interest for " << i);
-      }
       if (avoidSeqEnd >= m_seq) {
-        m_seq = avoidSeqEnd;
+        m_seq = avoidSeqEnd + 1;
         seq = m_seq + 1;
       }
-      avoidSeqStart = avoidSeqEnd = 0;
+      startNormalSending = true;
     }
   }
   if (m_step3 == true) {
@@ -373,14 +371,24 @@ Consumer::SendPacket(int frequency)
       NS_LOG_INFO("> Interest for " << seq);
     }
   }
-  else {
+  else { // basic version
     if (seq <= avoidSeqEnd &&  seq >= avoidSeqStart && avoidSeqStart != 0) {
-    // don't send it out because it's already sent
+      // don't send it out because it's already sent
     }
     else {
-      if (hasCoverage) {
+      if (hasCoverage && startNormalSending) {
         SendGeneralInterest(seq);
         NS_LOG_INFO("> Interest for " << seq);
+        if (avoidSeqStart < avoidSeqEnd) {
+          for (int i = avoidSeqStart; i <= std::min(avoidSeqStart + 10, avoidSeqEnd); i++) {
+            SendGeneralInterest(i);
+            NS_LOG_INFO("> Recovery Interest for " << i);
+          }
+          avoidSeqStart += std::min(10, avoidSeqEnd - avoidSeqStart);
+          if (avoidSeqStart >= avoidSeqEnd) {
+            avoidSeqStart = avoidSeqEnd = 0;
+          }
+        }
       }
     }
   }

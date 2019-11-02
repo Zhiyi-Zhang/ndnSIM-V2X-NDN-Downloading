@@ -67,7 +67,7 @@ rttsum <- summary(df$rtt[1:100])
 
 # packets received per sencod
 scale <- 0.2
-table_row <- 40/scale
+table_row <- 60/scale
 df2 <- data.frame(second = numeric(table_row),
                   packetNum = numeric(table_row),
                   stringsAsFactors = FALSE)

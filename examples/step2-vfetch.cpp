@@ -215,7 +215,7 @@ int main (int argc, char *argv[])
   NS_LOG_INFO("Installing NDN stack");
   ndn::StackHelper ndnHelper;
   //ndnHelper.InstallAll();
-  ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "1000", "HitRatio", hitRatio);
+  ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "2000", "HitRatio", hitRatio);
   //ndnHelper.SetDefaultRoutes(true);
   //ndnHelper.SetOldContentStore("ns3::ndn::cs::Nocache");
   // ndnHelper.InstallAll();
@@ -293,7 +293,7 @@ int main (int argc, char *argv[])
 
   //ndn::CsTracer::Install(routers[0],"simple-wifi-mobility-trace.txt", Seconds(1.0));
 
-  Simulator::Run ();
+  Simulator::Run();
   Simulator::Destroy ();
 
   return 0;

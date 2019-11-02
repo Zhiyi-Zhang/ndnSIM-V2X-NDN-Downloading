@@ -54,7 +54,7 @@ Producer::GetTypeId(void)
                     MakeUintegerAccessor(&Producer::m_virtualPayloadSize),
                     MakeUintegerChecker<uint32_t>())
       .AddAttribute("Freshness", "Freshness of data packets, if 0, then unlimited freshness",
-                    TimeValue(Seconds(0)), MakeTimeAccessor(&Producer::m_freshness),
+                    TimeValue(Seconds(4)), MakeTimeAccessor(&Producer::m_freshness),
                     MakeTimeChecker())
       .AddAttribute(
          "Signature",

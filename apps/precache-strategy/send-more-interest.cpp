@@ -86,6 +86,7 @@ moreInterestsToSend(uint32_t seqAboutToSend, ns3::ndn::Consumer::TrafficInfo tra
     rate = rate / (sumXX - rttVec.size() * aveX * aveX);
     threshold = aveY;
   }
+  threshold = default_rtt;
 
   // check if about to enter the next RSU, if yes, send pre-fetch Interests to front vehicle
   for (int i = 0; i < entering_tp.size(); i++) {
