@@ -20,7 +20,6 @@
 #include <vector>
 #include <string>
 
-
 NS_LOG_COMPONENT_DEFINE ("step01");
 
 using namespace std;
@@ -35,51 +34,51 @@ namespace ns3 {
  *                                   | Producer |
  *                                   \----------/
  *                                         |
- *                                     Internet       100Mbps 60ms
+ *                                     Internet       10Mbps 100ms
  *                                         |
  *                                    /--------\
  *                           +------->|  root  |<--------+
- *                           |        \--------/         |    100Mbps 20ms
+ *                           |        \--------/         |    10Mbps 20ms
  *                           |                           |
  *                           v                           v
  *                      /-------\                    /-------\
  *              +------>| rtr-4 |<-------+   +------>| rtr-5 |<--------+
  *              |       \-------/        |   |       \-------/         |
- *              |                        |   |                         |   100Mbps 12ms
+ *              |                        |   |                         |   10Mbps 10ms
  *              v                        v   v                         v
  *         /-------\                   /-------\                    /-------\
  *      +->| rtr-1 |<-+             +->| rtr-2 |<-+              +->| rtr-3 |<-+
  *      |  \-------/  |             |  \-------/  |              |  \-------/  |
- *      |             |             |             |              |             | 100Mbps 10ms
+ *      |             |             |             |              |             | 10Mbps 2ms
  *      v             v             v             v              v             v
  *   /------\      /------\      /------\      /------\      /------\      /------\
  *   |wifi-1|      |wifi-2|      |wifi-3|      |wifi-4|      |wifi-5|      |wifi-6|
  *   \------/      \------/      \------/      \------/      \------/      \------/
  *
  *
- * |v1|-->
+ * |v1|-->      |v2|-->
  *
  *
  * To run scenario and see what is happening, use the following command:
  *
- *     ./waf --run=step0
+ *     ./waf --run=step2
  *
  * With LOGGING: e.g.
  *
- *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step3 2>&1 | tee src/ndnSIM/results/pure-ndn.txt
- *     NS_LOG=YansWifiPhy=level_all|prefix_func|prefix_time ./waf --run=step0 2>&1 | tee log0.txt
+ *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step3 2>&1 | tee src/ndnSIM/results/interest-only.txt
  */
 
 int main (int argc, char *argv[])
 {
   std::string phyMode ("DsssRate1Mbps");
-  uint32_t wifiSta = 1;
+  uint32_t wifiSta = 2;
 
   int bottomrow = 6;            // number of AP nodes
   int spacing = 200;            // between bottom-row nodes
-  int range = 90;               // AP ranges
-  double endtime = 40.0;
-  double speed = (double)(bottomrow*spacing)/endtime; //setting speed to span full sim time
+  int range = 60;               // AP ranges
+  int v2vRange = 40;
+  double endtime = 60.0;
+  double speed = (double)20; //setting speed to span full sim time
   double downRate = 20.0;
   string hitRatio = "1.0";
   string downRateStr = "";
@@ -94,7 +93,6 @@ int main (int argc, char *argv[])
   if (downRateStr.length() > 0) {
     downRate = std::stod(downRateStr);
   }
-  std::cout << "Hit Ratio" << hitRatio << std::endl;
 
   ////// Reading file for topology setup
   AnnotatedTopologyReader topologyReader("", 1);
@@ -117,6 +115,9 @@ int main (int argc, char *argv[])
                           Names::Find<Node>("r5"),
                           Names::Find<Node>("r6"),};
 
+  NodeContainer consumers;
+  consumers.Create(wifiSta);
+
   ////// disable fragmentation, RTS/CTS for frames below 2200 bytes and fix non-unicast data rate
   Config::SetDefault("ns3::WifiRemoteStationManager::FragmentationThreshold", StringValue("2200"));
   Config::SetDefault("ns3::WifiRemoteStationManager::RtsCtsThreshold", StringValue("2200"));
@@ -125,51 +126,28 @@ int main (int argc, char *argv[])
   ////// The below set of helpers will help us to put together the wifi NICs we want
   WifiHelper wifi;
 
-  wifi.SetStandard(WIFI_PHY_STANDARD_80211b);
-  YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default();
+  wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
 
-  ////// This is one parameter that matters when using FixedRssLossModel
-  ////// set it to zero; otherwise, gain will be added
-  // wifiPhy.Set ("RxGain", DoubleValue (0) );
-
-  ////// ns-3 supports RadioTap and Prism tracing extensions for 802.11b
+  YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
   wifiPhy.SetPcapDataLinkType (YansWifiPhyHelper::DLT_IEEE802_11_RADIO);
-
   YansWifiChannelHelper wifiChannel;
-
   wifiChannel.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
-  // wifiChannel.AddPropagationLoss("ns3::NakagamiPropagationLossModel");
-
-  ////// The below FixedRssLossModel will cause the rss to be fixed regardless
-  ////// of the distance between the two stations, and the transmit power
-  // wifiChannel.AddPropagationLoss ("ns3::FixedRssLossModel","Rss",DoubleValue(rss));
-
-  ////// the following has an absolute cutoff at distance > range (range == radius)
-  wifiChannel.AddPropagationLoss("ns3::RangePropagationLossModel",
+  wifiChannel.AddPropagationLoss ("ns3::RangePropagationLossModel",
                                   "MaxRange", DoubleValue(range));
-
-
-  wifiPhy.SetChannel(wifiChannel.Create ());
-  wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
+  wifiPhy.SetChannel (wifiChannel.Create ());
+  wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
                                 "DataMode", StringValue (phyMode),
                                 "ControlMode", StringValue (phyMode));
 
-  ////// Setup the rest of the upper mac
   ////// Setting SSID, optional. Modified net-device to get Bssid, mandatory for AP unicast
   Ssid ssid = Ssid ("wifi-default");
-  // wifi.SetRemoteStationManager ("ns3::ArfWifiManager");
 
   ////// Add a non-QoS upper mac of STAs, and disable rate control
-  NqosWifiMacHelper wifiMacHelper = NqosWifiMacHelper::Default();
   ////// Active associsation of STA to AP via probing.
+  NqosWifiMacHelper wifiMacHelper = NqosWifiMacHelper::Default();
   wifiMacHelper.SetType("ns3::StaWifiMac", "Ssid", SsidValue(ssid),
                         "ActiveProbing", BooleanValue(true),
                         "ProbeRequestTimeout", TimeValue(Seconds(0.25)));
-
-  ////// Creating 1 mobile nodes
-  NodeContainer consumers;
-  consumers.Create(wifiSta);
-
   NetDeviceContainer staDevice = wifi.Install(wifiPhy, wifiMacHelper, consumers);
   NetDeviceContainer devices = staDevice;
 
@@ -182,8 +160,21 @@ int main (int argc, char *argv[])
     devices.Add(apDevice);
   }
 
-  ////// Note that with FixedRssLossModel, the positions below are not
-  ////// used for received signal strength.
+  ////// Add AdHoc Mac for Consumers
+  WifiHelper wifi2 = WifiHelper::Default ();
+  // wifi.SetRemoteStationManager ("ns3::AarfWifiManager");
+  wifi2.SetStandard (WIFI_PHY_STANDARD_80211a);
+  wifi2.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
+                                "DataMode", StringValue ("OfdmRate24Mbps"));
+  YansWifiChannelHelper wifiChannel2;// = YansWifiChannelHelper::Default ();
+  wifiChannel2.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
+  wifiChannel2.AddPropagationLoss ("ns3::RangePropagationLossModel",
+                                  "MaxRange", DoubleValue(v2vRange));
+  YansWifiPhyHelper wifiPhy2 = YansWifiPhyHelper::Default ();
+  wifiPhy2.SetChannel (wifiChannel.Create ());
+  NqosWifiMacHelper wifiMac2 = NqosWifiMacHelper::Default ();
+  wifiMac2.SetType("ns3::AdhocWifiMac");
+  wifi.Install(wifiPhy2, wifiMac2, consumers);
 
   ////// set positions for APs
   MobilityHelper sessile;
@@ -210,11 +201,11 @@ int main (int argc, char *argv[])
   for (uint32_t i=0; i<wifiSta ; i++) {
     Ptr<ConstantVelocityMobilityModel> cvmm =
       consumers.Get(i)->GetObject<ConstantVelocityMobilityModel>();
-    Vector pos(0-nxt, 0, 0);
+    Vector pos(nxt, 0, 0);
     Vector vel(speed, 0, 0);
     cvmm->SetPosition(pos);
     cvmm->SetVelocity(vel);
-    nxt += 100;
+    nxt += 20;
   }
 
   // std::cout << "position: " << cvmm->GetPosition() << " velocity: " << cvmm->GetVelocity() << std::endl;
@@ -224,13 +215,28 @@ int main (int argc, char *argv[])
   NS_LOG_INFO("Installing NDN stack");
   ndn::StackHelper ndnHelper;
   //ndnHelper.InstallAll();
-  ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "1000", "HitRatio", hitRatio);
+  ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "2000", "HitRatio", hitRatio);
   //ndnHelper.SetDefaultRoutes(true);
   //ndnHelper.SetOldContentStore("ns3::ndn::cs::Nocache");
-  ndnHelper.InstallAll();
+  // ndnHelper.InstallAll();
+  ndnHelper.Install(Names::Find<Node>("ap1"));
+  ndnHelper.Install(Names::Find<Node>("ap2"));
+  ndnHelper.Install(Names::Find<Node>("ap3"));
+  ndnHelper.Install(Names::Find<Node>("ap4"));
+  ndnHelper.Install(Names::Find<Node>("ap5"));
+  ndnHelper.Install(Names::Find<Node>("ap6"));
+  ndnHelper.SetOldContentStore("ns3::ndn::cs::Nocache");
+  ndnHelper.Install(Names::Find<Node>("root"));
+  ndnHelper.Install(Names::Find<Node>("r1"));
+  ndnHelper.Install(Names::Find<Node>("r2"));
+  ndnHelper.Install(Names::Find<Node>("r3"));
+  ndnHelper.Install(Names::Find<Node>("r4"));
+  ndnHelper.Install(Names::Find<Node>("r5"));
+  ndnHelper.Install(Names::Find<Node>("r6"));
+  ndnHelper.Install(consumers);
 
   // Choosing forwarding strategy
-  ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/best-route");
+  ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/multicast");
   //ndn::StrategyChoiceHelper::InstallAll("/", "/localhost/nfd/strategy/best-route");
 
   // Installing global routing interface on all nodes
@@ -239,15 +245,6 @@ int main (int argc, char *argv[])
 
   // 4. Set up applications
   NS_LOG_INFO("Installing Applications");
-  // Consumer Helpers
-  ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
-  consumerHelper.SetPrefix("/youtube/video001");
-  // consumerHelper.SetPrefix("/youtube/prefix");
-  consumerHelper.SetAttribute("Frequency", DoubleValue(downRate));
-  // consumerHelper.SetAttribute("RetxTimer", );
-  consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));
-  // consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.0));
-
   // Producer Helpers
   ndn::AppHelper producerHelper("ns3::ndn::Producer");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
@@ -259,6 +256,28 @@ int main (int argc, char *argv[])
 
   // Calculate and install FIBs
   ndn::GlobalRoutingHelper::CalculateRoutes();
+
+  // Consumer Helpers
+  ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
+  consumerHelper.SetPrefix("/youtube/video001");
+  // consumerHelper.SetPrefix("/youtube/prefix");
+  consumerHelper.SetAttribute("Frequency", DoubleValue(downRate));
+  // consumerHelper.SetAttribute("RetxTimer", );
+  consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));
+  // consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.0));
+
+  // Prefetcher Helpers
+  for (int i = 1; i < wifiSta; ++i) {
+    ndn::AppHelper prefetcherHelper("PrefetcherApp");
+    prefetcherHelper.SetAttribute("NodeID", UintegerValue(i));
+    prefetcherHelper.SetAttribute("Prefix", StringValue("/youtube/video001"));
+    prefetcherHelper.Install(consumers.Get(i)).Start(Seconds(0.1));
+  }
+
+  for (auto consumer: consumers) {
+    ndn::FibHelper::AddRouteForDevice(consumer, "/youtube/video001", std::numeric_limits<int32_t>::max(), 0);
+    ndn::FibHelper::AddRouteForDevice(consumer, "/prefetch", std::numeric_limits<int32_t>::max(), 1);
+  }
 
   // Tracing
   wifiPhy.EnablePcap("step01", devices);
@@ -273,7 +292,7 @@ int main (int argc, char *argv[])
 
   //ndn::CsTracer::Install(routers[0],"simple-wifi-mobility-trace.txt", Seconds(1.0));
 
-  Simulator::Run ();
+  Simulator::Run();
   Simulator::Destroy ();
 
   return 0;

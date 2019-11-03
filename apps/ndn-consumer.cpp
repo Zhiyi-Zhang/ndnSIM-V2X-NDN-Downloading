@@ -82,7 +82,7 @@ Consumer::GetTypeId(void)
 
     .AddAttribute("RetxTimer",
                   "Timeout defining how frequent retransmission timeouts should be checked",
-                  StringValue("2000ms"),
+                  StringValue("600ms"),
                   MakeTimeAccessor(&Consumer::GetRetxTimer, &Consumer::SetRetxTimer),
                   MakeTimeChecker())
 
@@ -275,16 +275,18 @@ Consumer::SendPacket(int frequency)
 
   NS_LOG_FUNCTION_NOARGS();
 
-  uint32_t seq = std::numeric_limits<uint32_t>::max(); // invalid
-  bool is_retx = false;
-
-  while (m_retxSeqs.size()) {
-    seq = *m_retxSeqs.begin();
-    m_retxSeqs.erase(m_retxSeqs.begin());
-    is_retx = true;
-    break;
+  if (m_step2) {
+  std::vector<uint32_t> pre_fetch_seq;
+  bool dumpRtxQueue = false;
+  bool hasCoverage = false;
+  std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, frequency);
+  if (pre_fetch_seq.size() > 0) {
+    SendBundledInterest(m_seq, m_seq + 70);
+  }
   }
 
+  if (m_seq == 0) {
+  uint32_t seq = std::numeric_limits<uint32_t>::max(); // invalid
   if (seq == std::numeric_limits<uint32_t>::max()) {
     if (m_seqMax != std::numeric_limits<uint32_t>::max()) {
       if (m_seq >= m_seqMax) {
@@ -293,99 +295,99 @@ Consumer::SendPacket(int frequency)
     }
     seq = m_seq++;
   }
+  SendGeneralInterest(seq);
+  NS_LOG_INFO("> Interest for " << seq);
+  }
+
+  ScheduleNextPacket();
 
   ///////////////////////////////////////////
   //          Start of Algorithm           //
   ///////////////////////////////////////////
-  bool hasCoverage = true;
-  if (m_step2 == true) {
-    // prefetch by one-hop V2V communiaction
-    // log the current real rtt vector
-    std::string rtt_str = "[";
-    for (auto entry: traffic_info.real_rtt) {
-      rtt_str += std::to_string(entry) + ",";
-    }
-    rtt_str += "]";
-    NS_LOG_INFO ("Current Real RTT: " << rtt_str );
+  // bool hasCoverage = true;
+  // if (m_step2 == true) {
+  //   // prefetch by one-hop V2V communiaction
+  //   // log the current real rtt vector
+  //   std::string rtt_str = "[";
+  //   for (auto entry: traffic_info.real_rtt) {
+  //     rtt_str += std::to_string(entry) + ",";
+  //   }
+  //   rtt_str += "]";
+  //   NS_LOG_INFO ("Current Real RTT: " << rtt_str );
 
-    std::vector<uint32_t> pre_fetch_seq;
-    bool dumpRtxQueue = false;
-    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, frequency);
-    NS_LOG_INFO ("ALGO RESULT: " << pre_fetch_seq.size() << " " << dumpRtxQueue << " "  << hasCoverage);
-    if (pre_fetch_seq.size() > 0) {
-      NS_LOG_INFO ("CURRENT FREQUENCY: " << frequency);
-      avoidSeqStart = pre_fetch_seq.front();
-      avoidSeqEnd = pre_fetch_seq.back();
-      NS_LOG_INFO ("SET AVOIDSEQ START: " << avoidSeqStart);
-      NS_LOG_INFO ("SET AVOIDSEQ END: " << avoidSeqEnd);
+  //   std::vector<uint32_t> pre_fetch_seq;
+  //   bool dumpRtxQueue = false;
+  //   std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, frequency);
+  //   NS_LOG_INFO ("ALGO RESULT: " << pre_fetch_seq.size() << " " << dumpRtxQueue << " "  << hasCoverage);
+  //   if (pre_fetch_seq.size() > 0) {
+  //     NS_LOG_INFO ("CURRENT FREQUENCY: " << frequency);
+  //     avoidSeqStart = pre_fetch_seq.front();
+  //     avoidSeqEnd = pre_fetch_seq.back();
+  //     NS_LOG_INFO ("SET AVOIDSEQ START: " << avoidSeqStart);
+  //     NS_LOG_INFO ("SET AVOIDSEQ END: " << avoidSeqEnd);
 
-      // /prefetch/prefix/seq1/seq2/ap
-      SendBundledInterest(pre_fetch_seq.front(), pre_fetch_seq.back());
-      NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication for "
-                  << pre_fetch_seq.front() << " to " << pre_fetch_seq.back());
-      startNormalSending = false;
-    }
-    if (dumpRtxQueue && avoidSeqStart != avoidSeqEnd) {
-      NS_LOG_INFO("DumpRtxQueue is true");
-      if (avoidSeqEnd >= m_seq) {
-        m_seq = avoidSeqEnd + 1;
-        seq = m_seq + 1;
-      }
-      startNormalSending = true;
-    }
-  }
-  if (m_step3 == true) {
-    std::string rtt_str = "[";
-    for (auto entry: traffic_info.real_rtt) {
-      rtt_str += std::to_string(entry) + ",";
-    }
-    rtt_str += "]";
-    NS_LOG_INFO ("Current Real RTT: " << rtt_str );
+  //     // /prefetch/prefix/seq1/seq2/ap
+  //     SendBundledInterest(pre_fetch_seq.front(), pre_fetch_seq.back());
+  //     NS_LOG_INFO("> Pre-Fetch Interest by One-hop V2V Communication for "
+  //                 << pre_fetch_seq.front() << " to " << pre_fetch_seq.back());
+  //     startNormalSending = false;
+  //   }
+  //   if (dumpRtxQueue && avoidSeqStart != avoidSeqEnd) {
+  //     NS_LOG_INFO("DumpRtxQueue is true");
+  //     if (avoidSeqEnd >= m_seq) {
+  //       m_seq = avoidSeqEnd + 1;
+  //       seq = m_seq + 1;
+  //     }
+  //     startNormalSending = true;
+  //     for (int j = 0; j < 1; j++) {
+  //       SendGeneralInterest(avoidSeqStart + j);
+  //       NS_LOG_INFO("> Recovery Interest for " << avoidSeqStart + j);
+  //     }
+  //   }
+  // }
+  // if (m_step3 == true) {
+  //   std::string rtt_str = "[";
+  //   for (auto entry: traffic_info.real_rtt) {
+  //     rtt_str += std::to_string(entry) + ",";
+  //   }
+  //   rtt_str += "]";
+  //   NS_LOG_INFO ("Current Real RTT: " << rtt_str );
 
-    std::vector<uint32_t> pre_fetch_seq;
-    bool dumpRtxQueue = false;
-    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, frequency);
-  }
+  //   std::vector<uint32_t> pre_fetch_seq;
+  //   bool dumpRtxQueue = false;
+  //   std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, frequency);
+  // }
 
-  ///////////////////////////////////////////
-  //          End of Algorithm             //
-  ///////////////////////////////////////////
+  // ///////////////////////////////////////////
+  // //          End of Algorithm             //
+  // ///////////////////////////////////////////
 
-  if (m_step3 == true) {
-    if (!hasCoverage) {
-      if (rand() % 100 < 77) {
-        SendGeneralInterestToFace257(seq);
-        NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
-      }
-      else {
-        NS_LOG_INFO("> Interest for " << seq << "Through Ad Hoc Face suppressed by chance");
-      }
-    }
-    else {
-      SendGeneralInterest(seq);
-      NS_LOG_INFO("> Interest for " << seq);
-    }
-  }
-  else { // basic version
-    if (seq <= avoidSeqEnd &&  seq >= avoidSeqStart && avoidSeqStart != 0) {
-      // don't send it out because it's already sent
-    }
-    else {
-      if (hasCoverage && startNormalSending) {
-        SendGeneralInterest(seq);
-        NS_LOG_INFO("> Interest for " << seq);
-        if (avoidSeqStart < avoidSeqEnd) {
-          for (int i = avoidSeqStart; i <= avoidSeqEnd; i++) {
-            SendGeneralInterest(i);
-            NS_LOG_INFO("> Recovery Interest for " << i);
-          }
-          avoidSeqStart = avoidSeqEnd = 0;
-        }
-      }
-    }
-  }
-
-  ScheduleNextPacket();
+  // if (m_step3 == true) {
+  //   if (!hasCoverage) {
+  //     if (rand() % 100 < 77) {
+  //       SendGeneralInterestToFace257(seq);
+  //       NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
+  //     }
+  //     else {
+  //       NS_LOG_INFO("> Interest for " << seq << "Through Ad Hoc Face suppressed by chance");
+  //     }
+  //   }
+  //   else {
+  //     SendGeneralInterest(seq);
+  //     NS_LOG_INFO("> Interest for " << seq);
+  //   }
+  // }
+  // else { // basic version
+  //   if (seq <= avoidSeqEnd && seq >= avoidSeqStart && avoidSeqStart != 0) {
+  //     // don't send it out because it's already sent
+  //   }
+  //   else {
+  //     if (hasCoverage && startNormalSending) {
+  //       SendGeneralInterest(seq);
+  //       NS_LOG_INFO("> Interest for " << seq);
+  //     }
+  //   }
+  // }
 }
 
 ///////////////////////////////////////////////////
@@ -398,38 +400,19 @@ Consumer::OnData(shared_ptr<const Data> data)
   if (!m_active)
     return;
 
-  // introduce packet loss
-  std::uniform_int_distribution<> packet_loss_dist(0, 100);
-  uint64_t number = packet_loss_dist(rengine_);
-  // packet loss rate = 1%
-  /*
-  if (number == 0) {
-    // std::cout << "node(" << m_id << ") drops the current interest: name = " << interest.getName() << std::endl;
-    return;
-  }
-  */
-  /*
-  // packet loss rate = 5%
-  if (number >= 0 && number < 5) {
-    return;
-  }
-  */
-  /*
-  // packet loss rate = 10%
-  if (number >= 0 && number < 10) {
-    return;
-  }
-  */
-
   App::OnData(data); // tracing inside
 
-  // NS_LOG_FUNCTION(this << data);
-  NS_LOG_INFO("DATA Name = " << data->getName().toUri() );
-
-  // NS_LOG_INFO ("Received content object: " << boost::cref(*data));
-
-  // This could be a problem......
   uint32_t seq = data->getName().at(-1).toSequenceNumber();
+
+  // if (seq == avoidSeqStart && avoidSeqStart < avoidSeqEnd) {
+  //   avoidSeqStart++;
+  //   SendGeneralInterest(avoidSeqStart);
+  //   NS_LOG_INFO("> Recovery Interest for " << avoidSeqStart);
+  // }
+  // if (avoidSeqStart == avoidSeqEnd && avoidSeqStart != 0) {
+  //   NS_LOG_INFO("Now avoidSeqStart == avoidSeqEnd");
+  //   avoidSeqStart = avoidSeqEnd = 0;
+  // }
 
   NS_LOG_INFO("< DATA for " << seq);
 
@@ -473,8 +456,19 @@ Consumer::OnData(shared_ptr<const Data> data)
   }
   traffic_info.real_rtt.push_back(cur_real_rtt);
   traffic_info.est_rtt.push_back(cur_est_rtt);
-  // store the data (seq)
-  data_cache.insert(seq);
+
+  // send next interest
+  seq = std::numeric_limits<uint32_t>::max(); // invalid
+  if (seq == std::numeric_limits<uint32_t>::max()) {
+    if (m_seqMax != std::numeric_limits<uint32_t>::max()) {
+      if (m_seq >= m_seqMax) {
+        return; // we are totally done
+      }
+    }
+    seq = m_seq++;
+  }
+  SendGeneralInterest(seq);
+  NS_LOG_INFO("> Interest for " << seq);
 }
 
 void
@@ -491,14 +485,21 @@ void
 Consumer::OnTimeout(uint32_t sequenceNumber)
 {
   NS_LOG_FUNCTION(sequenceNumber);
-  // std::cout << Simulator::Now () << ", TO: " << sequenceNumber << ", current RTO: " <<
-  // m_rtt->RetransmitTimeout ().ToDouble (Time::S) << "s\n";
-
-  m_rtt->IncreaseMultiplier(); // Double the next RTO
-  m_rtt->SentSeq(SequenceNumber32(sequenceNumber),
-                 1); // make sure to disable RTT calculation for this sample
+  m_rtt->SentSeq(SequenceNumber32(sequenceNumber), 1); // make sure to disable RTT calculation for this sample
   m_retxSeqs.insert(sequenceNumber);
-  ScheduleNextPacket();
+
+  SendGeneralInterest(sequenceNumber);
+  NS_LOG_INFO("Retransmission");
+  NS_LOG_INFO("> Interest for " << sequenceNumber);
+  // if (sequenceNumber == avoidSeqStart) {
+  //   avoidSeqStart++;
+  //   SendGeneralInterest(avoidSeqStart);
+  //   NS_LOG_INFO("> Recovery Interest for " << avoidSeqStart);
+  // }
+  // if (avoidSeqStart == avoidSeqEnd && avoidSeqStart != 0) {
+  //   NS_LOG_INFO("Now avoidSeqStart == avoidSeqEnd");
+  //   avoidSeqStart = avoidSeqEnd = 0;
+  // }
 
   // record the retx info
   if (traffic_info.retx_time.size() == kRetxVectorMaxSize) {

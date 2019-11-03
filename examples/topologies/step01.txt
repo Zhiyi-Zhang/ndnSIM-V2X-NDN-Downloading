@@ -32,4 +32,4 @@ r2          r5    100Mbps    1       12ms    100
 r3          r5    100Mbps    1       12ms    100
 r4          r6  100Mbps    1       20ms   100
 r5          r6  100Mbps    1       20ms   100
-r6          root  100Mbps    1       60ms   100
+r6          root  100Mbps    1       30ms   100
