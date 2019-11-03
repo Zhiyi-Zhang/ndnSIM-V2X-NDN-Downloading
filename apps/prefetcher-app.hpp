@@ -10,7 +10,7 @@
 
 namespace ns3 {
 
-class PrefetcherApp : public Application 
+class PrefetcherApp : public Application
 {
 public:
   static TypeId

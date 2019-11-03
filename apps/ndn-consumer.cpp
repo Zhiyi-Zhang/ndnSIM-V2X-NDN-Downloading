@@ -345,16 +345,6 @@ Consumer::SendPacket(int frequency)
     std::vector<uint32_t> pre_fetch_seq;
     bool dumpRtxQueue = false;
     std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, frequency);
-    if (pre_fetch_seq.size() > 0) {
-      avoidSeqStart = pre_fetch_seq.front() - 1;
-      avoidSeqEnd = pre_fetch_seq.back();
-      NS_LOG_INFO ("SET AVOIDSEQ START: " << avoidSeqStart);
-      NS_LOG_INFO ("SET AVOIDSEQ END: " << avoidSeqEnd);
-    }
-    if (dumpRtxQueue) {
-      NS_LOG_INFO("DumpRtxQueue is true");
-      avoidSeqStart = avoidSeqEnd = 0;
-    }
   }
 
   ///////////////////////////////////////////
@@ -364,21 +354,18 @@ Consumer::SendPacket(int frequency)
   int send_chance = rand() % 100;
 
   if (m_step3 == true) {
-    if (seq <= avoidSeqEnd && seq >= avoidSeqStart && avoidSeqStart != 0) {
-      if (send_chance < 75){
+    if (!hasCoverage) {
+      if (send_chance < 75) {
         SendGeneralInterestToFace257(seq);
         NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
-      }else{
+      }
+      else {
         NS_LOG_INFO("> Interest for " << seq << "Through Ad Hoc Face suppressed by chance");
       }
     }
     else {
-      if (send_chance < 75){
-        SendGeneralInterest(seq);
-        NS_LOG_INFO("> Interest for " << seq);
-      }else{
-        NS_LOG_INFO("> Interest for " << seq << "suppressed by chance");        
-      }
+      SendGeneralInterest(seq);
+      NS_LOG_INFO("> Interest for " << seq);
     }
   }
   else { // basic version
@@ -386,19 +373,10 @@ Consumer::SendPacket(int frequency)
       // don't send it out because it's already sent
     }
     else {
-      if (hasCoverage && startNormalSending && send_chance < 75) {
-
+      if (hasCoverage && startNormalSending) {
         SendGeneralInterest(seq);
         NS_LOG_INFO("> Interest for " << seq);
         if (avoidSeqStart < avoidSeqEnd) {
-          // for (int i = avoidSeqStart; i <= std::min(avoidSeqStart + 10, avoidSeqEnd); i++) {
-          //   SendGeneralInterest(i);
-          //   NS_LOG_INFO("> Recovery Interest for " << i);
-          // }
-          // avoidSeqStart += std::min(10, avoidSeqEnd - avoidSeqStart);
-          // if (avoidSeqStart >= avoidSeqEnd) {
-          //   avoidSeqStart = avoidSeqEnd = 0;
-          // }
           for (int i = avoidSeqStart; i <= avoidSeqEnd; i++) {
             SendGeneralInterest(i);
             NS_LOG_INFO("> Recovery Interest for " << i);

@@ -18,6 +18,7 @@
 #include <ndn-cxx/util/scheduler-scoped-event-id.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
 #include <ndn-cxx/util/signal.hpp>
+#include <ndn-cxx/lp/tags.hpp>
 
 #include "ns3/application.h"
 #include "ns3/ptr.h"
@@ -98,7 +99,17 @@ class PrefetcherNode {
       // SendInterest(seq);
       // do nothing
     });
-    NS_LOG_INFO( "node(" << nid_ << ") send out Interest for " << seq );
+    // preInterest.refreshNonce();
+    // preInterest.setTag<lp::NextHopFaceIdTag>(make_shared<lp::NextHopFaceIdTag>(257));
+    // face_.expressInterest(preInterest, std::bind(&PrefetcherNode::OnRemoteData, this, _2),
+    //                       [](const Interest&, const lp::Nack&) {},
+    //                       [](const Interest&) {});
+    // retx_timer[seq] = scheduler_.scheduleEvent(kInterestLifetime, [this, seq] {
+    //   NS_LOG_INFO( "node(" << nid_ << ") Retx Timeout for " << seq );
+    //   // SendInterest(seq);
+    //   // do nothing
+    // });
+    // NS_LOG_INFO( "node(" << nid_ << ") send out Interest for " << seq );
   }
 
   std::string decode(std::string str) {

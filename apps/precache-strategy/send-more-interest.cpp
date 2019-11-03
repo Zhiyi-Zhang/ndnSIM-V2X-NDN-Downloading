@@ -11,19 +11,19 @@
 
 namespace ns3 {
 
-const std::vector<int64_t> handoff_tp = {8 * (uint64_t)1000000000 /*160m, AP1*/,
-                                         18 * (uint64_t)1000000000 /*360m, AP2*/,
-                                         28 * (uint64_t)1000000000 /*9.833s*2, 590m, AP3*/,
-                                         38 * (uint64_t)1000000000 /*9.833s*2, 790m, AP4*/,
-                                         48 * (uint64_t)1000000000 /*16.5s*2, 990m, AP5*/,
-                                         58 * (uint64_t)1000000000 /*19.833s*2, 1190m, AP6*/};
-
 const std::vector<int64_t> entering_tp = {2 * (uint64_t)1000000000 /*40m, AP1*/,
                                           12 * (uint64_t)1000000000 /*240m, AP2*/,
                                           22 * (uint64_t)1000000000 /*440m, AP3*/,
                                           32 * (uint64_t)1000000000 /*640m, AP4*/,
                                           42 * (uint64_t)1000000000 /*840m, AP5*/,
                                           52 * (uint64_t)1000000000/*1040m, AP6*/};
+
+const std::vector<int64_t> handoff_tp = {8 * (uint64_t)1000000000 /*160m, AP1*/,
+                                         18 * (uint64_t)1000000000 /*360m, AP2*/,
+                                         28 * (uint64_t)1000000000 /*9.833s*2, 590m, AP3*/,
+                                         38 * (uint64_t)1000000000 /*9.833s*2, 790m, AP4*/,
+                                         48 * (uint64_t)1000000000 /*16.5s*2, 990m, AP5*/,
+                                         58 * (uint64_t)1000000000 /*19.833s*2, 1190m, AP6*/};
 
 // the time interval between two APs when there is no wifi connection
 const int64_t wifiLessInterval = 4 * (uint64_t)1000000000;
@@ -49,8 +49,8 @@ moreInterestsToSend(uint32_t seqAboutToSend, ns3::ndn::Consumer::TrafficInfo tra
 {
   uint64_t currentTp = ns3::Simulator::Now().GetNanoSeconds();
   bool hasCoverage = true;
-  for (int i = 0; i < handoff_tp.size(); i++) {
-    if (currentTp >= handoff_tp[i] && currentTp < entering_tp[i] + not_real_coverage_period) {
+  for (int i = 0; i < handoff_tp.size() - 1; i++) {
+    if (currentTp >= handoff_tp[i] && currentTp < entering_tp[i + 1] + not_real_coverage_period) {
       hasCoverage = false;
       break;
     }

@@ -71,7 +71,7 @@ namespace ns3 {
 int main (int argc, char *argv[])
 {
   std::string phyMode ("DsssRate1Mbps");
-  uint32_t wifiSta = 2;
+  uint32_t wifiSta = 4;
 
   int bottomrow = 6;            // number of AP nodes
   int spacing = 200;            // between bottom-row nodes
@@ -205,7 +205,7 @@ int main (int argc, char *argv[])
     Vector vel(speed, 0, 0);
     cvmm->SetPosition(pos);
     cvmm->SetVelocity(vel);
-    nxt += 80;
+    nxt += 30;
   }
 
   // std::cout << "position: " << cvmm->GetPosition() << " velocity: " << cvmm->GetVelocity() << std::endl;
