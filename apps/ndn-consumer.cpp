@@ -77,12 +77,9 @@ Consumer::GetTypeId(void)
     .AddAttribute("Step3", "Application support to step3", BooleanValue(false),
                   MakeBooleanAccessor(&Consumer::m_step3), MakeBooleanChecker())
 
-    .AddAttribute("Step4", "Application support to step4", BooleanValue(false),
-                  MakeBooleanAccessor(&Consumer::m_step4), MakeBooleanChecker())
-
     .AddAttribute("RetxTimer",
                   "Timeout defining how frequent retransmission timeouts should be checked",
-                  StringValue("600ms"),
+                  StringValue("200ms"),
                   MakeTimeAccessor(&Consumer::GetRetxTimer, &Consumer::SetRetxTimer),
                   MakeTimeChecker())
 
@@ -154,11 +151,11 @@ Consumer::CheckRetxTimeout()
     SeqTimeoutsContainer::index<i_timestamp>::type::iterator entry =
       m_seqTimeouts.get<i_timestamp>().begin();
     if (entry->time + rto <= now) // timeout expired?
-    {
-      uint32_t seqNo = entry->seq;
-      m_seqTimeouts.get<i_timestamp>().erase(entry);
-      OnTimeout(seqNo);
-    }
+      {
+        uint32_t seqNo = entry->seq;
+        m_seqTimeouts.get<i_timestamp>().erase(entry);
+        OnTimeout(seqNo);
+      }
     else
       break; // nothing else to do. All later packets need not be retransmitted
   }
@@ -276,27 +273,43 @@ Consumer::SendPacket(int frequency)
   NS_LOG_FUNCTION_NOARGS();
 
   if (m_step2) {
-  std::vector<uint32_t> pre_fetch_seq;
-  bool dumpRtxQueue = false;
-  bool hasCoverage = false;
-  std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, frequency);
-  if (pre_fetch_seq.size() > 0) {
-    SendBundledInterest(m_seq, m_seq + 70);
-  }
+    std::vector<uint32_t> pre_fetch_seq;
+    bool dumpRtxQueue = false;
+    bool hasCoverage = false;
+    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, frequency);
+    if (pre_fetch_seq.size() > 0) {
+      SendBundledInterest(m_seq, m_seq + 70);
+    }
   }
 
   if (m_seq == 0) {
-  uint32_t seq = std::numeric_limits<uint32_t>::max(); // invalid
-  if (seq == std::numeric_limits<uint32_t>::max()) {
-    if (m_seqMax != std::numeric_limits<uint32_t>::max()) {
-      if (m_seq >= m_seqMax) {
-        return; // we are totally done
+    uint32_t seq = std::numeric_limits<uint32_t>::max(); // invalid
+    if (seq == std::numeric_limits<uint32_t>::max()) {
+      if (m_seqMax != std::numeric_limits<uint32_t>::max()) {
+        if (m_seq >= m_seqMax) {
+          return; // we are totally done
+        }
+      }
+      seq = m_seq++;
+    }
+    if (m_step3) {
+      std::vector<uint32_t> pre_fetch_seq;
+      bool dumpRtxQueue = false;
+      bool hasCoverage = false;
+      std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, 20);
+      if (!hasCoverage) {
+        SendGeneralInterestToFace257(seq);
+        NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
+      }
+      else {
+        SendGeneralInterest(seq);
+        NS_LOG_INFO("> Interest for " << seq);
       }
     }
-    seq = m_seq++;
-  }
-  SendGeneralInterest(seq);
-  NS_LOG_INFO("> Interest for " << seq);
+    else {
+      SendGeneralInterest(seq);
+      NS_LOG_INFO("> Interest for " << seq);
+    }
   }
 
   ScheduleNextPacket();
@@ -467,8 +480,24 @@ Consumer::OnData(shared_ptr<const Data> data)
     }
     seq = m_seq++;
   }
-  SendGeneralInterest(seq);
-  NS_LOG_INFO("> Interest for " << seq);
+  if (m_step3) {
+    std::vector<uint32_t> pre_fetch_seq;
+    bool dumpRtxQueue = false;
+    bool hasCoverage = false;
+    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, 20);
+    if (!hasCoverage) {
+      SendGeneralInterestToFace257(seq);
+      NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
+    }
+    else {
+      SendGeneralInterest(seq);
+      NS_LOG_INFO("> Interest for " << seq);
+    }
+  }
+  else {
+    SendGeneralInterest(seq);
+    NS_LOG_INFO("> Interest for " << seq);
+  }
 }
 
 void
@@ -488,9 +517,26 @@ Consumer::OnTimeout(uint32_t sequenceNumber)
   m_rtt->SentSeq(SequenceNumber32(sequenceNumber), 1); // make sure to disable RTT calculation for this sample
   m_retxSeqs.insert(sequenceNumber);
 
-  SendGeneralInterest(sequenceNumber);
-  NS_LOG_INFO("Retransmission");
-  NS_LOG_INFO("> Interest for " << sequenceNumber);
+  if (m_step3) {
+    std::vector<uint32_t> pre_fetch_seq;
+    bool dumpRtxQueue = false;
+    bool hasCoverage = false;
+    std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, 20);
+    if (!hasCoverage) {
+      SendGeneralInterestToFace257(sequenceNumber);
+      NS_LOG_INFO("> Interest for " << sequenceNumber << " Through Ad Hoc Face");
+    }
+    else {
+      SendGeneralInterest(sequenceNumber);
+      NS_LOG_INFO("Retransmission");
+      NS_LOG_INFO("> Interest for " << sequenceNumber);
+    }
+  }
+  else {
+    SendGeneralInterest(sequenceNumber);
+    NS_LOG_INFO("Retransmission");
+    NS_LOG_INFO("> Interest for " << sequenceNumber);
+  }
   // if (sequenceNumber == avoidSeqStart) {
   //   avoidSeqStart++;
   //   SendGeneralInterest(avoidSeqStart);
@@ -512,7 +558,7 @@ void
 Consumer::WillSendOutInterest(uint32_t sequenceNumber)
 {
   NS_LOG_DEBUG("Trying to add " << sequenceNumber << " with " << Simulator::Now() << ". already "
-                                << m_seqTimeouts.size() << " items");
+               << m_seqTimeouts.size() << " items");
 
   m_seqTimeouts.insert(SeqTimeout(sequenceNumber, Simulator::Now()));
   m_seqFullDelay.insert(SeqTimeout(sequenceNumber, Simulator::Now()));

@@ -65,18 +65,18 @@ namespace ns3 {
  *
  * With LOGGING: e.g.
  *
- *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step3 2>&1 | tee src/ndnSIM/results/full.txt
+ *     NS_LOG=ndn.Consumer:ndn.Producer ./waf --run=step3 2>&1 | tee src/ndnSIM/results/interest-only.txt
  */
 
 int main (int argc, char *argv[])
 {
   std::string phyMode ("DsssRate1Mbps");
-  uint32_t wifiSta = 4;
+  uint32_t wifiSta = 2;
 
   int bottomrow = 6;            // number of AP nodes
   int spacing = 200;            // between bottom-row nodes
   int range = 60;               // AP ranges
-  int v2vRange = 40;
+  int v2vRange = 100;
   double endtime = 60.0;
   double speed = (double)20; //setting speed to span full sim time
   double downRate = 20.0;
@@ -215,7 +215,7 @@ int main (int argc, char *argv[])
   NS_LOG_INFO("Installing NDN stack");
   ndn::StackHelper ndnHelper;
   //ndnHelper.InstallAll();
-  ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "1000", "HitRatio", hitRatio);
+  ndnHelper.SetOldContentStore("ns3::ndn::cs::Lru", "MaxSize", "2000", "HitRatio", hitRatio);
   //ndnHelper.SetDefaultRoutes(true);
   //ndnHelper.SetOldContentStore("ns3::ndn::cs::Nocache");
   // ndnHelper.InstallAll();
@@ -269,7 +269,6 @@ int main (int argc, char *argv[])
 
   for (auto consumer: consumers) {
     ndn::FibHelper::AddRouteForDevice(consumer, "/youtube/video001", std::numeric_limits<int32_t>::max(), 0);
-    ndn::FibHelper::AddRouteForDevice(consumer, "/prefetch", std::numeric_limits<int32_t>::max(), 1);
   }
 
   // Tracing
@@ -285,7 +284,7 @@ int main (int argc, char *argv[])
 
   //ndn::CsTracer::Install(routers[0],"simple-wifi-mobility-trace.txt", Seconds(1.0));
 
-  Simulator::Run ();
+  Simulator::Run();
   Simulator::Destroy ();
 
   return 0;
