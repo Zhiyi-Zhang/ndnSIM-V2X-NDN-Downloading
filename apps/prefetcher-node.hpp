@@ -84,7 +84,9 @@ class PrefetcherNode {
     std::cout << "node(" << nid_ << "), last ap = " << last_ap << ", current ap = " << cur_ap << std::endl;
 
     for (int seq = seq2; seq < seq1 + 1; seq++) {
-      SendInterest(seq);
+      if (rand() % 100 < 77) {
+        SendInterest(seq);
+      }
     }
   }
 

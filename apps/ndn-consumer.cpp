@@ -351,11 +351,9 @@ Consumer::SendPacket(int frequency)
   //          End of Algorithm             //
   ///////////////////////////////////////////
 
-  int send_chance = rand() % 100;
-
   if (m_step3 == true) {
     if (!hasCoverage) {
-      if (send_chance < 75) {
+      if (rand() % 100 < 77) {
         SendGeneralInterestToFace257(seq);
         NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
       }
