@@ -361,14 +361,24 @@ Consumer::SendPacket(int frequency)
   //          End of Algorithm             //
   ///////////////////////////////////////////
 
+  int send_chance = rand() % 100;
+
   if (m_step3 == true) {
     if (seq <= avoidSeqEnd && seq >= avoidSeqStart && avoidSeqStart != 0) {
-      SendGeneralInterestToFace257(seq);
-      NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
+      if (send_chance < 75){
+        SendGeneralInterestToFace257(seq);
+        NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
+      }else{
+        NS_LOG_INFO("> Interest for " << seq << "Through Ad Hoc Face suppressed by chance");
+      }
     }
     else {
-      SendGeneralInterest(seq);
-      NS_LOG_INFO("> Interest for " << seq);
+      if (send_chance < 75){
+        SendGeneralInterest(seq);
+        NS_LOG_INFO("> Interest for " << seq);
+      }else{
+        NS_LOG_INFO("> Interest for " << seq << "suppressed by chance");        
+      }
     }
   }
   else { // basic version
@@ -376,7 +386,8 @@ Consumer::SendPacket(int frequency)
       // don't send it out because it's already sent
     }
     else {
-      if (hasCoverage && startNormalSending) {
+      if (hasCoverage && startNormalSending && send_chance < 75) {
+
         SendGeneralInterest(seq);
         NS_LOG_INFO("> Interest for " << seq);
         if (avoidSeqStart < avoidSeqEnd) {
