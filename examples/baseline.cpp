@@ -262,7 +262,7 @@ int main (int argc, char *argv[])
   consumerHelper.SetPrefix("/youtube/video001");
   // consumerHelper.SetPrefix("/youtube/prefix");
   consumerHelper.SetAttribute("Frequency", DoubleValue(downRate));
-  consumerHelper.SetAttribute("Step2", BooleanValue(true));
+  // consumerHelper.SetAttribute("Step2", BooleanValue(true));
   // consumerHelper.SetAttribute("RetxTimer", );
   consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));
   // consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.0));

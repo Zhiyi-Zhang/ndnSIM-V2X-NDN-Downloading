@@ -39,10 +39,11 @@ class PrefetcherNode {
   using GetCurrentAP =
       std::function<ns3::Address()>;
 
-  PrefetcherNode(const Name& prefix, uint64_t nid, GetCurrentAP getCurrentAP):
+  PrefetcherNode(const Name& prefix, uint64_t chance, uint64_t nid, GetCurrentAP getCurrentAP):
     scheduler_(face_.getIoService()),
     key_chain_(ns3::ndn::StackHelper::getKeyChain()),
     prefix_(prefix),
+    m_chance(chance),
     nid_(nid),
     getCurrentAP_(std::move(getCurrentAP))
   {
@@ -84,7 +85,7 @@ class PrefetcherNode {
     std::cout << "node(" << nid_ << "), last ap = " << last_ap << ", current ap = " << cur_ap << std::endl;
 
     for (int seq = seq2; seq < seq1 + 1; seq++) {
-      if (rand() % 100 < 77) {
+      if (rand() % 100 < m_chance) {
         SendInterest(seq);
       }
     }
@@ -132,6 +133,7 @@ class PrefetcherNode {
   Scheduler scheduler_;
   KeyChain& key_chain_;
   Name prefix_;
+  uint64_t m_chance;
   uint64_t nid_;
   GetCurrentAP getCurrentAP_;
 

@@ -120,9 +120,9 @@ for (i in 1:table_row) {
   df2$packetNum[i] <- counter
 }
 pdf("pure-ndn.pdf",,width=6,height=3.5)
-par(mar=c(4,4,0,0)+0.1)
+par(mar=c(2,2,0,0)+0.2)
 plot(df2$second[1:table_row], df2$packetNum[1:table_row]*(1/scale), 
      xlab="Simulation Time (s)", ylab="Downloading (pkts/s)",
-     ylim = c(0, 50),
+     ylim = c(0, 40),
      type="l", col="blue", cex.lab=1.5, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)
 dev.off()

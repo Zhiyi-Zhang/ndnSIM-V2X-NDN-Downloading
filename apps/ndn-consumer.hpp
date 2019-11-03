@@ -256,10 +256,9 @@ protected:
 
   /// @endcond
 
-  bool m_step1;
   bool m_step2;
   bool m_step3;
-  bool m_step4;
+  uint64_t m_chance;
 };
 
 } // namespace ndn

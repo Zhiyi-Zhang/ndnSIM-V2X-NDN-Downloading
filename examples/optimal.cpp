@@ -75,8 +75,8 @@ int main (int argc, char *argv[])
 
   int bottomrow = 6;            // number of AP nodes
   int spacing = 200;            // between bottom-row nodes
-  int range = 60;               // AP ranges
-  int v2vRange = 100;
+  int range = 200;               // AP ranges
+  int v2vRange = 40;
   double endtime = 60.0;
   double speed = (double)20; //setting speed to span full sim time
   double downRate = 20.0;
@@ -205,7 +205,7 @@ int main (int argc, char *argv[])
     Vector vel(speed, 0, 0);
     cvmm->SetPosition(pos);
     cvmm->SetVelocity(vel);
-    nxt += 30;
+    nxt += 20;
   }
 
   // std::cout << "position: " << cvmm->GetPosition() << " velocity: " << cvmm->GetVelocity() << std::endl;
@@ -225,7 +225,6 @@ int main (int argc, char *argv[])
   ndnHelper.Install(Names::Find<Node>("ap4"));
   ndnHelper.Install(Names::Find<Node>("ap5"));
   ndnHelper.Install(Names::Find<Node>("ap6"));
-  ndnHelper.Install(consumers);
   ndnHelper.SetOldContentStore("ns3::ndn::cs::Nocache");
   ndnHelper.Install(Names::Find<Node>("root"));
   ndnHelper.Install(Names::Find<Node>("r1"));
@@ -234,6 +233,7 @@ int main (int argc, char *argv[])
   ndnHelper.Install(Names::Find<Node>("r4"));
   ndnHelper.Install(Names::Find<Node>("r5"));
   ndnHelper.Install(Names::Find<Node>("r6"));
+  ndnHelper.Install(consumers);
 
   // Choosing forwarding strategy
   ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/multicast");
@@ -262,13 +262,22 @@ int main (int argc, char *argv[])
   consumerHelper.SetPrefix("/youtube/video001");
   // consumerHelper.SetPrefix("/youtube/prefix");
   consumerHelper.SetAttribute("Frequency", DoubleValue(downRate));
-  consumerHelper.SetAttribute("Step3", BooleanValue(true));
+  // consumerHelper.SetAttribute("Step2", BooleanValue(true));
   // consumerHelper.SetAttribute("RetxTimer", );
   consumerHelper.Install(consumers.Get(0)).Start(Seconds(0.1));
   // consumerHelper.Install(consumers.Get(1)).Start(Seconds(0.0));
 
+  // Prefetcher Helpers
+  for (int i = 1; i < wifiSta; ++i) {
+    ndn::AppHelper prefetcherHelper("PrefetcherApp");
+    prefetcherHelper.SetAttribute("NodeID", UintegerValue(i));
+    prefetcherHelper.SetAttribute("Prefix", StringValue("/youtube/video001"));
+    prefetcherHelper.Install(consumers.Get(i)).Start(Seconds(0.1));
+  }
+
   for (auto consumer: consumers) {
     ndn::FibHelper::AddRouteForDevice(consumer, "/youtube/video001", std::numeric_limits<int32_t>::max(), 0);
+    ndn::FibHelper::AddRouteForDevice(consumer, "/prefetch", std::numeric_limits<int32_t>::max(), 1);
   }
 
   // Tracing

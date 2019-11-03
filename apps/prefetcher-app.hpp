@@ -22,8 +22,9 @@ public:
       .AddAttribute("Prefix", "Prefix for prefetcher", StringValue("/"),
                     ndn::MakeNameAccessor(&PrefetcherApp::prefix_), ndn::MakeNameChecker())
       .AddAttribute("NodeID", "NodeID for prefetcher", UintegerValue(0),
-                    MakeUintegerAccessor(&PrefetcherApp::nid_), MakeUintegerChecker<uint64_t>());
-
+                    MakeUintegerAccessor(&PrefetcherApp::nid_), MakeUintegerChecker<uint64_t>())
+      .AddAttribute("HitChance", "Probability to prefetch each pkt", UintegerValue(100),
+                    MakeUintegerAccessor(&PrefetcherApp::m_chance), MakeUintegerChecker<uint64_t>());
 
     return tid;
   }
@@ -44,7 +45,7 @@ protected:
   virtual void
   StartApplication()
   {
-    m_instance.reset(new ::ndn::PrefetcherNode(prefix_, nid_, std::bind(&PrefetcherApp::GetCurrentAP, this)));
+    m_instance.reset(new ::ndn::PrefetcherNode(prefix_, m_chance, nid_, std::bind(&PrefetcherApp::GetCurrentAP, this)));
     m_instance->Start();
   }
 
@@ -58,6 +59,7 @@ private:
   std::unique_ptr<::ndn::PrefetcherNode> m_instance;
   ndn::Name prefix_;
   uint64_t nid_;
+  uint64_t m_chance;
 };
 
 }

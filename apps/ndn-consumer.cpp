@@ -68,14 +68,14 @@ Consumer::GetTypeId(void)
     .AddAttribute("LifeTime", "LifeTime for interest packet", StringValue("4s"),
                   MakeTimeAccessor(&Consumer::m_interestLifeTime), MakeTimeChecker())
 
-    .AddAttribute("Step1", "Application support to step1", BooleanValue(false),
-                  MakeBooleanAccessor(&Consumer::m_step1), MakeBooleanChecker())
-
     .AddAttribute("Step2", "Application support to step2", BooleanValue(false),
                   MakeBooleanAccessor(&Consumer::m_step2), MakeBooleanChecker())
 
     .AddAttribute("Step3", "Application support to step3", BooleanValue(false),
                   MakeBooleanAccessor(&Consumer::m_step3), MakeBooleanChecker())
+
+    .AddAttribute("HitChance", "Probability to prefetch each pkt", UintegerValue(100),
+                  MakeUintegerAccessor(&Consumer::m_chance), MakeUintegerChecker<uint64_t>())
 
     .AddAttribute("RetxTimer",
                   "Timeout defining how frequent retransmission timeouts should be checked",
@@ -278,7 +278,7 @@ Consumer::SendPacket(int frequency)
     bool hasCoverage = false;
     std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, frequency);
     if (pre_fetch_seq.size() > 0) {
-      SendBundledInterest(m_seq, m_seq + 70);
+      SendBundledInterest(m_seq + 1, m_seq + 1 + 70);
     }
   }
 
@@ -417,16 +417,6 @@ Consumer::OnData(shared_ptr<const Data> data)
 
   uint32_t seq = data->getName().at(-1).toSequenceNumber();
 
-  // if (seq == avoidSeqStart && avoidSeqStart < avoidSeqEnd) {
-  //   avoidSeqStart++;
-  //   SendGeneralInterest(avoidSeqStart);
-  //   NS_LOG_INFO("> Recovery Interest for " << avoidSeqStart);
-  // }
-  // if (avoidSeqStart == avoidSeqEnd && avoidSeqStart != 0) {
-  //   NS_LOG_INFO("Now avoidSeqStart == avoidSeqEnd");
-  //   avoidSeqStart = avoidSeqEnd = 0;
-  // }
-
   NS_LOG_INFO("< DATA for " << seq);
 
   int hopCount = 0;
@@ -486,8 +476,14 @@ Consumer::OnData(shared_ptr<const Data> data)
     bool hasCoverage = false;
     std::tie(pre_fetch_seq, dumpRtxQueue, hasCoverage) = ns3::moreInterestsToSend(m_seq, traffic_info, 20);
     if (!hasCoverage) {
-      SendGeneralInterestToFace257(seq);
-      NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
+      if (rand() % 100 < m_chance) {
+        SendGeneralInterestToFace257(seq);
+        NS_LOG_INFO("> Interest for " << seq << " Through Ad Hoc Face");
+      }
+      else {
+        // let it timeout
+        SendGeneralInterest(seq);
+      }
     }
     else {
       SendGeneralInterest(seq);
